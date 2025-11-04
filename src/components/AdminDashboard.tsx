@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { LogOut, UtensilsCrossed, LayoutDashboard, Calendar, FileText, Settings } from 'lucide-react';
 import { WeeklyMenuManager } from './WeeklyMenuManager';
 import { ReportGenerator } from './ReportGenerator';
+import { UserManagement } from './UserManagement';
+import { UserList } from './UserList';
 import type { User, DailyMenu, MealSelection } from '../App';
 
 interface AdminDashboardProps {
@@ -21,7 +23,7 @@ export function AdminDashboard({
   onLogout,
   onUpdateMenus
 }: AdminDashboardProps) {
-  const [activeView, setActiveView] = useState<'dashboard' | 'menu' | 'reports'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'menu' | 'reports' | 'users'>('dashboard');
 
   const getTodaySelections = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -44,6 +46,7 @@ export function AdminDashboard({
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'menu', label: 'Add Menu', icon: Calendar },
+    { id: 'users', label: 'Users', icon: Settings },
     { id: 'reports', label: 'Reports', icon: FileText },
   ];
 
@@ -286,6 +289,16 @@ export function AdminDashboard({
                 selections={selections}
                 weeklyMenus={weeklyMenus}
               />
+            )}
+
+            {activeView === 'users' && (
+              <div className="space-y-6">
+                <h1>👥 User Management</h1>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <UserManagement onUserCreated={() => window.location.reload()} />
+                  <UserList />
+                </div>
+              </div>
             )}
           </div>
         </div>
