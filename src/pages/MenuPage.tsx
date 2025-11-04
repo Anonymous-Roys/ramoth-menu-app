@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { WorkerDashboard } from '../components/WorkerDashboard'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import { User, DailyMenu, MealSelection } from '../App'
 
 export function MenuPage() {
@@ -23,47 +24,112 @@ export function MenuPage() {
     }
     
     setCurrentUser(user)
-
-    // Initialize sample menus
-    const today = new Date()
-    const sampleMenus: DailyMenu[] = []
-    
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today)
-      date.setDate(today.getDate() + i)
-      
-      sampleMenus.push({
-        date: date.toISOString().split('T')[0],
-        meals: [
-          {
-            id: `meal-${i}-1`,
-            name: 'Jollof Rice',
-            description: 'Served with chicken and salad'
-          },
-          {
-            id: `meal-${i}-2`,
-            name: 'Fried Rice',
-            description: 'Served with beef and vegetables'
-          },
-          {
-            id: `meal-${i}-3`,
-            name: 'Banku & Okro',
-            description: 'Served with fish'
-          }
-        ]
-      })
-    }
-    
-    setWeeklyMenus(sampleMenus)
+    fetchMenus()
+    fetchSelections(user.id)
   }, [navigate])
+
+  const fetchMenus = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('menus')
+        .select('*')
+        .order('date', { ascending: true })
+
+      if (error) throw error
+
+      const menus: DailyMenu[] = data.map(menu => ({
+        date: menu.date,
+        meals: menu.meals
+      }))
+
+      setWeeklyMenus(menus)
+    } catch (error) {
+      console.error('Failed to fetch menus:', error)
+    }
+  }
+
+  const fetchSelections = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('selections')
+        .select('*, users(name, department)')
+        .eq('user_id', userId)
+
+      if (error) throw error
+
+      const userSelections: MealSelection[] = data.map(selection => ({
+        userId: selection.user_id,
+        userName: selection.users?.name || 'Unknown',
+        department: selection.users?.department || 'Unknown',
+        mealId: selection.meal_id,
+        mealName: selection.meal_name,
+        date: selection.date,
+        time: new Date(selection.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      }))
+
+      setSelections(userSelections)
+    } catch (error) {
+      console.error('Failed to fetch selections:', error)
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser')
     navigate('/login')
   }
 
-  const handleMealSelection = (selection: MealSelection) => {
-    setSelections(prev => [...prev, selection])
+  const handleMealSelection = async (selection: MealSelection) => {
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      
+      // Check if user already has a selection for today
+      const { data: existingSelection } = await supabase
+        .from('selections')
+        .select('id')
+        .eq('user_id', selection.userId)
+        .eq('date', today)
+        .single()
+
+      if (existingSelection) {
+        // Update existing selection
+        const { error } = await supabase
+          .from('selections')
+          .update({
+            meal_id: selection.mealId,
+            meal_name: selection.mealName,
+            created_at: new Date().toISOString()
+          })
+          .eq('id', existingSelection.id)
+
+        if (error) throw error
+        
+        // Update local state
+        setSelections(prev => 
+          prev.map(s => 
+            s.userId === selection.userId && s.date === today
+              ? { ...s, mealId: selection.mealId, mealName: selection.mealName }
+              : s
+          )
+        )
+      } else {
+        // Insert new selection
+        const { error } = await supabase
+          .from('selections')
+          .insert({
+            user_id: selection.userId,
+            meal_id: selection.mealId,
+            meal_name: selection.mealName,
+            date: selection.date,
+            location: null
+          })
+
+        if (error) throw error
+        
+        setSelections(prev => [...prev, selection])
+      }
+    } catch (error) {
+      console.error('Failed to save selection:', error)
+    }
   }
 
   if (!currentUser) {

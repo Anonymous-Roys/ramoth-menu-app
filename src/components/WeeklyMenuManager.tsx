@@ -4,8 +4,9 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { Plus, Save, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import type { DailyMenu, MealOption } from '../App';
 
 interface WeeklyMenuManagerProps {
@@ -65,7 +66,7 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
     }));
   };
 
-  const handleSaveMenu = () => {
+  const handleSaveMenu = async () => {
     const newMenus: DailyMenu[] = [];
     let hasError = false;
 
@@ -91,22 +92,36 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
 
     if (hasError) return;
 
-    // Merge with existing menus (keep menus outside the current week)
-    const today = new Date();
-    const weekEnd = new Date(today);
-    weekEnd.setDate(today.getDate() + 7);
+    try {
+      // Get current user
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      
+      // Delete existing menus for these dates
+      const dates = newMenus.map(m => m.date);
+      await supabase
+        .from('menus')
+        .delete()
+        .in('date', dates);
 
-    const updatedMenus = [
-      ...weeklyMenus.filter(m => {
-        const menuDate = new Date(m.date);
-        return menuDate < today || menuDate >= weekEnd;
-      }),
-      ...newMenus
-    ];
+      // Insert new menus
+      const menuInserts = newMenus.map(menu => ({
+        date: menu.date,
+        meals: menu.meals,
+        created_by: currentUser.id
+      }));
 
-    updatedMenus.sort((a, b) => a.date.localeCompare(b.date));
-    onUpdateMenus(updatedMenus);
-    toast.success('Weekly menu saved successfully');
+      const { error } = await supabase
+        .from('menus')
+        .insert(menuInserts);
+
+      if (error) throw error;
+
+      onUpdateMenus([...weeklyMenus.filter(m => !dates.includes(m.date)), ...newMenus]);
+      toast.success('Weekly menu saved successfully');
+    } catch (error) {
+      toast.error('Failed to save menu');
+      console.error(error);
+    }
   };
 
   const handleLoadTemplate = () => {

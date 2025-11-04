@@ -6,6 +6,7 @@ import { WeeklyMenuManager } from './WeeklyMenuManager';
 import { ReportGenerator } from './ReportGenerator';
 import { UserManagement } from './UserManagement';
 import { UserList } from './UserList';
+import { DailyReport } from './DailyReport';
 import type { User, DailyMenu, MealSelection } from '../App';
 
 interface AdminDashboardProps {
@@ -23,7 +24,7 @@ export function AdminDashboard({
   onLogout,
   onUpdateMenus
 }: AdminDashboardProps) {
-  const [activeView, setActiveView] = useState<'dashboard' | 'menu' | 'reports' | 'users'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'menu' | 'reports' | 'users' | 'daily-report'>('dashboard');
 
   const getTodaySelections = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -47,6 +48,7 @@ export function AdminDashboard({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'menu', label: 'Add Menu', icon: Calendar },
     { id: 'users', label: 'Users', icon: Settings },
+    { id: 'daily-report', label: 'Daily Report', icon: FileText },
     { id: 'reports', label: 'Reports', icon: FileText },
   ];
 
@@ -298,6 +300,13 @@ export function AdminDashboard({
                   <UserManagement onUserCreated={() => window.location.reload()} />
                   <UserList />
                 </div>
+              </div>
+            )}
+
+            {activeView === 'daily-report' && (
+              <div className="space-y-6">
+                <h1>📈 Daily Report</h1>
+                <DailyReport />
               </div>
             )}
           </div>
