@@ -1,0 +1,274 @@
+import { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { toast } from 'sonner@2.0.3';
+import { Plus, Save, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
+import type { DailyMenu, MealOption } from '../App';
+
+interface WeeklyMenuManagerProps {
+  weeklyMenus: DailyMenu[];
+  onUpdateMenus: (menus: DailyMenu[]) => void;
+}
+
+interface WeeklyMenuInput {
+  [date: string]: MealOption[];
+}
+
+export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuManagerProps) {
+  const [weeklyInput, setWeeklyInput] = useState<WeeklyMenuInput>(() => {
+    const today = new Date();
+    const initialData: WeeklyMenuInput = {};
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const existingMenu = weeklyMenus.find(m => m.date === dateStr);
+      initialData[dateStr] = existingMenu?.meals || [
+        { id: '1', name: '', description: '' },
+        { id: '2', name: '', description: '' },
+        { id: '3', name: '', description: '' }
+      ];
+    }
+    
+    return initialData;
+  });
+
+  const getDayName = (dateStr: string) => {
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' });
+  };
+
+  const getFormattedDate = (dateStr: string) => {
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  const handleMealChange = (date: string, mealIndex: number, field: 'name' | 'description', value: string) => {
+    setWeeklyInput(prev => ({
+      ...prev,
+      [date]: prev[date].map((meal, idx) => 
+        idx === mealIndex ? { ...meal, [field]: value } : meal
+      )
+    }));
+  };
+
+  const handleAddMealOption = (date: string) => {
+    setWeeklyInput(prev => ({
+      ...prev,
+      [date]: [...prev[date], { id: Date.now().toString(), name: '', description: '' }]
+    }));
+  };
+
+  const handleSaveMenu = () => {
+    const newMenus: DailyMenu[] = [];
+    let hasError = false;
+
+    Object.entries(weeklyInput).forEach(([date, meals]) => {
+      const validMeals = meals.filter(m => m.name.trim() !== '');
+      
+      if (validMeals.length > 0 && validMeals.length < 2) {
+        hasError = true;
+        toast.error(`${getDayName(date)} ${getFormattedDate(date)}: At least 2 meal options required`);
+      }
+      
+      if (validMeals.length >= 2) {
+        newMenus.push({
+          date,
+          meals: validMeals.map((m, idx) => ({
+            id: `${date}-${idx}`,
+            name: m.name,
+            description: m.description
+          }))
+        });
+      }
+    });
+
+    if (hasError) return;
+
+    // Merge with existing menus (keep menus outside the current week)
+    const today = new Date();
+    const weekEnd = new Date(today);
+    weekEnd.setDate(today.getDate() + 7);
+
+    const updatedMenus = [
+      ...weeklyMenus.filter(m => {
+        const menuDate = new Date(m.date);
+        return menuDate < today || menuDate >= weekEnd;
+      }),
+      ...newMenus
+    ];
+
+    updatedMenus.sort((a, b) => a.date.localeCompare(b.date));
+    onUpdateMenus(updatedMenus);
+    toast.success('Weekly menu saved successfully');
+  };
+
+  const handleLoadTemplate = () => {
+    const template: MealOption[] = [
+      { id: '1', name: 'Jollof Rice', description: 'Served with chicken and salad' },
+      { id: '2', name: 'Fried Rice', description: 'Served with beef and vegetables' },
+      { id: '3', name: 'Banku & Okro', description: 'Served with fish' }
+    ];
+
+    setWeeklyInput(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(date => {
+        updated[date] = template.map(m => ({ ...m }));
+      });
+      return updated;
+    });
+
+    toast.success('Template loaded for all days');
+  };
+
+  const dates = Object.keys(weeklyInput).sort();
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>🗓️ Add Weekly Menu</CardTitle>
+              <CardDescription>
+                Create or modify meal options for the next 7 days
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleLoadTemplate} variant="outline" size="sm">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Load Template
+              </Button>
+              <Button onClick={handleSaveMenu} className="bg-blue-600 hover:bg-blue-700" size="sm">
+                <Save className="w-4 h-4 mr-2" />
+                Save Menu
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-32">Day</TableHead>
+                  <TableHead>Meal 1</TableHead>
+                  <TableHead>Meal 2</TableHead>
+                  <TableHead>Meal 3</TableHead>
+                  <TableHead className="w-20">+Add</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dates.map((date) => {
+                  const meals = weeklyInput[date];
+                  return (
+                    <TableRow key={date}>
+                      <TableCell>
+                        <div>
+                          <p>{getDayName(date)}</p>
+                          <p className="text-sm text-gray-500">{getFormattedDate(date)}</p>
+                        </div>
+                      </TableCell>
+                      {[0, 1, 2].map(idx => (
+                        <TableCell key={idx}>
+                          {meals[idx] ? (
+                            <div className="space-y-2">
+                              <Input
+                                placeholder="Meal name"
+                                value={meals[idx].name}
+                                onChange={(e) => handleMealChange(date, idx, 'name', e.target.value)}
+                                className="text-sm"
+                              />
+                              <Input
+                                placeholder="Description"
+                                value={meals[idx].description}
+                                onChange={(e) => handleMealChange(date, idx, 'description', e.target.value)}
+                                className="text-sm"
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </TableCell>
+                      ))}
+                      <TableCell>
+                        <Button
+                          onClick={() => handleAddMealOption(date)}
+                          variant="ghost"
+                          size="sm"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="mb-2">💡 Tips</h4>
+            <ul className="text-sm text-gray-700 space-y-1">
+              <li>• Each day should have at least 2 meal options</li>
+              <li>• Use the "Load Template" button to quickly populate all days with default meals</li>
+              <li>• Leave fields empty if no meal is available for that day</li>
+              <li>• Changes are saved when you click "Save Menu"</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-600 p-2 rounded-lg">
+                <CalendarIcon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Editing Period</p>
+                <p>Next 7 Days</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-orange-600 p-2 rounded-lg">
+                <Save className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Current Menus</p>
+                <p>{weeklyMenus.length} Configured</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-green-600 p-2 rounded-lg">
+                <Plus className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Meal Options</p>
+                <p>2-3 per day</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
