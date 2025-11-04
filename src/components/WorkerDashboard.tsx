@@ -89,7 +89,7 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 9;
+    return hours < 13;
   };
 
   const getTodayMenu = (): DailyMenu | null => {
