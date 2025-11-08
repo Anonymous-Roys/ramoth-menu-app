@@ -3,6 +3,7 @@ import { Button } from './ui/button'
 import { LogOut, UtensilsCrossed, LayoutDashboard, Calendar, FileText, Settings, Menu, X } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { User } from '../App'
+import logo from '../logo.png'
 
 interface AdminSidebarProps {
   user: User
@@ -45,11 +46,9 @@ export function AdminSidebar({ user, onLogout }: AdminSidebarProps) {
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-2 rounded-lg">
-              <UtensilsCrossed className="w-4 h-4 text-white" />
-            </div>
+            <img src={logo} alt="Ramoth Logo" className="w-8 h-8 object-contain" />
             <div>
-              <h2 className="font-semibold text-gray-900">Admin</h2>
+              <h2 className="font-semibold text-gray-900">Ramoth Admin</h2>
               <p className="text-xs text-gray-600">{user.name}</p>
             </div>
           </div>
@@ -67,11 +66,9 @@ export function AdminSidebar({ user, onLogout }: AdminSidebarProps) {
           <div className="p-6">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
-                <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
-                  <UtensilsCrossed className="w-6 h-6" />
-                </div>
+                <img src={logo} alt="Ramoth Logo" className="w-10 h-10 object-contain bg-white/20 backdrop-blur-sm p-2 rounded-xl" />
                 <div>
-                  <h3 className="text-white">Menu App</h3>
+                  <h3 className="text-white">Ramoth Menu App</h3>
                   <p className="text-sm text-blue-200">Admin Panel</p>
                 </div>
               </div>

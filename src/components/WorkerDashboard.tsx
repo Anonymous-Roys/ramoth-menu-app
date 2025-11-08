@@ -116,11 +116,6 @@ export function WorkerDashboard({
     //   return;
     // }
 
-    if (hasSelectedToday()) {
-      toast.error('You have already selected a meal for today');
-      return;
-    }
-
     const selection: MealSelection = {
       userId: user.id,
       userName: user.name,
@@ -170,7 +165,7 @@ export function WorkerDashboard({
   const todaySelection = getTodaySelection();
   const beforeDeadline = isBeforeDeadline();
   // const canSelect = isOnSite && beforeDeadline && !alreadySelected;
-  const canSelect = !alreadySelected;
+  const canSelect = true;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
@@ -300,7 +295,7 @@ export function WorkerDashboard({
               🍛 Today's Meals
             </CardTitle>
             <CardDescription>
-              {canSelect ? 'Select your preferred meal' : alreadySelected ? 'Your selection is confirmed' : 'Selection is currently unavailable'}
+              {alreadySelected ? 'Click to change your selection' : 'Select your preferred meal'}
             </CardDescription>
           </CardHeader>
           <CardContent>
