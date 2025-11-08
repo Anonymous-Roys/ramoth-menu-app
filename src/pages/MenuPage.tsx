@@ -9,6 +9,7 @@ export function MenuPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [weeklyMenus, setWeeklyMenus] = useState<DailyMenu[]>([])
   const [selections, setSelections] = useState<MealSelection[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const userData = localStorage.getItem('currentUser')
@@ -70,6 +71,8 @@ export function MenuPage() {
       setSelections(userSelections)
     } catch (error) {
       console.error('Failed to fetch selections:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -132,8 +135,15 @@ export function MenuPage() {
     }
   }
 
-  if (!currentUser) {
-    return null
+  if (!currentUser || isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading menus...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

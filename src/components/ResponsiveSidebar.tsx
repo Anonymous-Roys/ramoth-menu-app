@@ -20,7 +20,7 @@ export function ResponsiveSidebar({ user, onLogout }: ResponsiveSidebarProps) {
     { label: 'Add Menu', icon: Calendar, path: '/admin/addmenu' },
     { label: 'Users', icon: Settings, path: '/admin/users' },
     { label: 'Daily Report', icon: FileText, path: '/admin/dailyreport' },
-    { label: 'Reports', icon: FileText, path: '/admin/reports' },
+
   ]
 
   const handleNavigation = (path: string) => {

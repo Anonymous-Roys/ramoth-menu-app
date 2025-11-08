@@ -107,14 +107,14 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 9;
+    return hours < 12;
   };
 
   const handleMealSelect = (mealId: string, mealName: string) => {
-    if (!isBeforeDeadline()) {
-      toast.error('Selection deadline has passed (9:00 AM)');
-      return;
-    }
+    // if (!isBeforeDeadline()) {
+    //   toast.error('Selection deadline has passed (12:00 PM)');
+    //   return;
+    // }
 
     if (hasSelectedToday()) {
       toast.error('You have already selected a meal for today');
@@ -249,7 +249,7 @@ export function WorkerDashboard({
                 <div>
                   <p className="text-sm text-gray-600">Deadline Status</p>
                   <p className={beforeDeadline ? 'text-blue-600' : 'text-gray-600'}>
-                    {beforeDeadline ? 'Before 9:00 AM ✓' : 'After 9:00 AM'}
+                    {beforeDeadline ? 'Before 12:00 PM ✓' : 'After 12:00 PM'}
                   </p>
                 </div>
               </div>
@@ -279,7 +279,7 @@ export function WorkerDashboard({
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              ⏰ Selection deadline has passed. Selections close at 9:00 AM daily.
+              ⏰ Selection deadline has passed. Selections close at 12:00 PM daily.
             </AlertDescription>
           </Alert>
         )}
@@ -369,7 +369,7 @@ export function WorkerDashboard({
                   <h4 className="mb-2">Selection Requirements</h4>
                   <ul className="text-sm text-gray-700 space-y-1">
                     <li>🔒 You must be on-site to select</li>
-                    <li>🕒 Selection closes at 9:00 AM</li>
+                    <li>🕒 Selection closes at 12:00 PM</li>
                   </ul>
                 </div>
               </div>

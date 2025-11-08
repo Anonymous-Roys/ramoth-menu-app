@@ -19,7 +19,6 @@ export function AdminSidebar({ user, onLogout }: AdminSidebarProps) {
     { id: 'addmenu', label: 'Add Menu', icon: Calendar, path: '/admin/addmenu' },
     { id: 'users', label: 'Users', icon: Settings, path: '/admin/users' },
     { id: 'dailyreport', label: 'Daily Report', icon: FileText, path: '/admin/dailyreport' },
-    { id: 'reports', label: 'Reports', icon: FileText, path: '/admin/reports' },
   ]
 
   const handleNavigation = (path: string) => {

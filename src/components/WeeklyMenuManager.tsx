@@ -5,7 +5,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { toast } from 'sonner';
-import { Plus, Save, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
+import { Plus, Save, Calendar as CalendarIcon, RefreshCw, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { DailyMenu, MealOption } from '../App';
 
@@ -19,6 +19,7 @@ interface WeeklyMenuInput {
 }
 
 export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuManagerProps) {
+  const [isSaving, setIsSaving] = useState(false);
   const [weeklyInput, setWeeklyInput] = useState<WeeklyMenuInput>(() => {
     const today = new Date();
     const initialData: WeeklyMenuInput = {};
@@ -67,6 +68,7 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
   };
 
   const handleSaveMenu = async () => {
+    setIsSaving(true);
     const newMenus: DailyMenu[] = [];
     let hasError = false;
 
@@ -90,7 +92,10 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
       }
     });
 
-    if (hasError) return;
+    if (hasError) {
+      setIsSaving(false);
+      return;
+    }
 
     try {
       // Get current user
@@ -121,6 +126,8 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
     } catch (error) {
       toast.error('Failed to save menu');
       console.error(error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -142,6 +149,43 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
     toast.success('Template loaded for all days');
   };
 
+  const handleDeleteMenu = async (date: string) => {
+    if (!confirm(`Delete menu for ${getDayName(date)} ${getFormattedDate(date)}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('menus')
+        .delete()
+        .eq('date', date);
+
+      if (error) throw error;
+
+      setWeeklyInput(prev => ({
+        ...prev,
+        [date]: [
+          { id: '1', name: '', description: '' },
+          { id: '2', name: '', description: '' },
+          { id: '3', name: '', description: '' }
+        ]
+      }));
+
+      onUpdateMenus(weeklyMenus.filter(m => m.date !== date));
+      toast.success('Menu deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete menu');
+      console.error(error);
+    }
+  };
+
+  const handleRemoveMeal = (date: string, mealIndex: number) => {
+    setWeeklyInput(prev => ({
+      ...prev,
+      [date]: prev[date].filter((_, idx) => idx !== mealIndex)
+    }));
+  };
+
   const dates = Object.keys(weeklyInput).sort();
 
   return (
@@ -160,9 +204,14 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Load Template
               </Button>
-              <Button onClick={handleSaveMenu} className="bg-blue-600 hover:bg-blue-700" size="sm">
+              <Button 
+                onClick={handleSaveMenu} 
+                className="bg-blue-600 hover:bg-blue-700" 
+                size="sm"
+                disabled={isSaving}
+              >
                 <Save className="w-4 h-4 mr-2" />
-                Save Menu
+                {isSaving ? 'Saving...' : 'Save Menu'}
               </Button>
             </div>
           </div>
@@ -191,7 +240,7 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
                       <TableCell>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {meals.map((meal, idx) => (
-                            <div key={idx} className="space-y-2 p-3 border rounded-lg">
+                            <div key={idx} className="space-y-2 p-3 border rounded-lg relative">
                               <Input
                                 placeholder="Meal name"
                                 value={meal.name}
@@ -204,18 +253,38 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
                                 onChange={(e) => handleMealChange(date, idx, 'description', e.target.value)}
                                 className="text-sm"
                               />
+                              {meals.length > 2 && (
+                                <Button
+                                  onClick={() => handleRemoveMeal(date, idx)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute -top-2 -right-2 h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
                             </div>
                           ))}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          onClick={() => handleAddMealOption(date)}
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            onClick={() => handleAddMealOption(date)}
+                            variant="ghost"
+                            size="sm"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteMenu(date)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

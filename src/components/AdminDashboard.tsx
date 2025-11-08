@@ -96,7 +96,7 @@ export function AdminDashboard({
     { id: 'menu', label: 'Add Menu', icon: Calendar },
     { id: 'users', label: 'Users', icon: Settings },
     { id: 'daily-report', label: 'Daily Report', icon: FileText },
-    { id: 'reports', label: 'Reports', icon: FileText },
+
   ];
 
   return (
