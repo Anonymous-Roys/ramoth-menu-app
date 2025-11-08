@@ -87,10 +87,7 @@ export function WorkerDashboard({
     return R * c;
   };
 
-  const isBeforeDeadline = () => {
-    const hours = currentTime.getHours();
-    return hours < 9;
-  };
+
 
   const getTodayMenu = (): DailyMenu | null => {
     const today = new Date().toISOString().split('T')[0];
@@ -108,11 +105,6 @@ export function WorkerDashboard({
   };
 
   const handleMealSelect = (mealId: string, mealName: string) => {
-    if (!isBeforeDeadline()) {
-      toast.error('Selection deadline has passed (9:00 AM)');
-      return;
-    }
-
     if (hasSelectedToday()) {
       toast.error('You have already selected a meal for today');
       return;
@@ -167,8 +159,7 @@ export function WorkerDashboard({
   const todayMenu = getTodayMenu();
   const alreadySelected = hasSelectedToday();
   const todaySelection = getTodaySelection();
-  const beforeDeadline = isBeforeDeadline();
-  const canSelect = isOnSite && beforeDeadline && !alreadySelected;
+  const canSelect = isOnSite && !alreadySelected;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
@@ -238,21 +229,7 @@ export function WorkerDashboard({
             </CardContent>
           </Card>
 
-          <Card className={beforeDeadline ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-xl ${beforeDeadline ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                  <Clock className={`w-5 h-5 ${beforeDeadline ? 'text-blue-600' : 'text-gray-600'}`} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Deadline Status</p>
-                  <p className={beforeDeadline ? 'text-blue-600' : 'text-gray-600'}>
-                    {beforeDeadline ? 'Before 9:00 AM ✓' : 'After 9:00 AM'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
 
           <Card className={alreadySelected ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}>
             <CardContent className="pt-6">
@@ -271,15 +248,7 @@ export function WorkerDashboard({
           </Card>
         </div>
 
-        {/* Alerts */}
-        {!beforeDeadline && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              ⏰ Selection deadline has passed. Selections close at 9:00 AM daily.
-            </AlertDescription>
-          </Alert>
-        )}
+
 
         {alreadySelected && todaySelection && (
           <Alert className="border-green-200 bg-green-50">
@@ -366,7 +335,7 @@ export function WorkerDashboard({
                   <h4 className="mb-2">Selection Requirements</h4>
                   <ul className="text-sm text-gray-700 space-y-1">
                     <li>🔒 You must be on-site to select</li>
-                    <li>🕒 Selection closes at 9:00 AM</li>
+                    <li>🍽️ One meal selection per day</li>
                   </ul>
                 </div>
               </div>

@@ -37,7 +37,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
               <span className="text-orange-600">2</span>
             </div>
             <div>
-              <h4>Pick your preferred meal before 9:00 AM</h4>
+              <h4>Pick your preferred meal</h4>
               <p className="text-sm text-gray-600">Make your selection while on company premises</p>
             </div>
           </div>
@@ -70,6 +70,12 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
       setStep(step + 1);
     } else {
       onComplete(dontShowAgain);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (step > 0) {
+      setStep(step - 1);
     }
   };
 
@@ -142,14 +148,26 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                 </>
               ) : (
                 <>
-                  <Button
-                    onClick={handleNext}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    size="lg"
-                  >
-                    Next
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  </Button>
+                  <div className="flex gap-3">
+                    {step > 0 && (
+                      <Button
+                        onClick={handlePrevious}
+                        variant="outline"
+                        className="flex-1"
+                        size="lg"
+                      >
+                        Previous
+                      </Button>
+                    )}
+                    <Button
+                      onClick={handleNext}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      size="lg"
+                    >
+                      Next
+                      <ChevronRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </div>
                   <Button
                     onClick={handleSkip}
                     variant="ghost"
