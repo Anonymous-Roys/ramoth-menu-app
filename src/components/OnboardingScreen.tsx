@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { UtensilsCrossed, Clock, CheckCircle, ChevronRight } from 'lucide-react';
+import logo from '../logo.png';
 
 interface OnboardingScreenProps {
   onComplete: (showAgain: boolean) => void;
@@ -14,7 +15,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const steps = [
     {
       icon: UtensilsCrossed,
-      title: 'Welcome to the Company Menu Selection System',
+      title: 'Welcome to the Ramoth Menu Selection System',
       description: 'Choose your meal, save time, and skip the paper.',
       color: 'text-blue-600'
     },
@@ -88,11 +89,15 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
       <Card className="w-full max-w-2xl shadow-xl">
         <CardContent className="pt-12 pb-8 px-8">
           <div className="text-center space-y-6">
-            {/* Icon */}
+            {/* Icon/Logo */}
             <div className="flex justify-center">
-              <div className={`bg-gradient-to-br ${step === 0 ? 'from-blue-100 to-blue-200' : step === 1 ? 'from-orange-100 to-orange-200' : 'from-green-100 to-green-200'} p-6 rounded-full`}>
-                <Icon className={`w-12 h-12 ${currentStep.color}`} />
-              </div>
+              {step === 0 ? (
+                <img src={logo} alt="Ramoth Logo" className="w-24 h-24 object-contain" />
+              ) : (
+                <div className={`bg-gradient-to-br ${step === 1 ? 'from-orange-100 to-orange-200' : 'from-green-100 to-green-200'} p-6 rounded-full`}>
+                  <Icon className={`w-12 h-12 ${currentStep.color}`} />
+                </div>
+              )}
             </div>
 
             {/* Title */}

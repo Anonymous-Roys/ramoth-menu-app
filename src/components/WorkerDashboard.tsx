@@ -7,6 +7,7 @@ import { toast } from 'sonner@2.0.3';
 import { LogOut, MapPin, Clock, Check, AlertCircle, UtensilsCrossed, Calendar, User } from 'lucide-react';
 import { WeeklyMenuView } from './WeeklyMenuView';
 import type { User as UserType, DailyMenu, MealSelection } from '../App';
+import logo from '../logo.png';
 
 interface WorkerDashboardProps {
   user: UserType;
@@ -104,7 +105,17 @@ export function WorkerDashboard({
     return selections.find(s => s.userId === user.id && s.date === today) || null;
   };
 
+  const isBeforeDeadline = () => {
+    const hours = currentTime.getHours();
+    return hours < 9;
+  };
+
   const handleMealSelect = (mealId: string, mealName: string) => {
+    if (!isBeforeDeadline()) {
+      toast.error('Selection deadline has passed (9:00 AM)');
+      return;
+    }
+
     if (hasSelectedToday()) {
       toast.error('You have already selected a meal for today');
       return;
@@ -131,11 +142,9 @@ export function WorkerDashboard({
         <div className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-2 rounded-xl">
-                <UtensilsCrossed className="w-5 h-5 text-white" />
-              </div>
+              <img src={logo} alt="Ramoth Logo" className="w-10 h-10 object-contain" />
               <div>
-                <h2>Company Menu App</h2>
+                <h2>Ramoth Menu App</h2>
                 <p className="text-sm text-gray-600">{user.name}</p>
               </div>
             </div>
@@ -159,7 +168,9 @@ export function WorkerDashboard({
   const todayMenu = getTodayMenu();
   const alreadySelected = hasSelectedToday();
   const todaySelection = getTodaySelection();
-  const canSelect = isOnSite && !alreadySelected;
+  const beforeDeadline = isBeforeDeadline();
+  // const canSelect = isOnSite && beforeDeadline && !alreadySelected;
+  const canSelect = !alreadySelected;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
@@ -167,11 +178,9 @@ export function WorkerDashboard({
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-2 rounded-xl">
-              <UtensilsCrossed className="w-5 h-5 text-white" />
-            </div>
+            <img src={logo} alt="Ramoth Logo" className="w-10 h-10 object-contain" />
             <div>
-              <h2>Company Menu App</h2>
+              <h2>Ramoth Menu App</h2>
               <p className="text-sm text-gray-600">{user.name}</p>
             </div>
           </div>
@@ -231,6 +240,22 @@ export function WorkerDashboard({
 
 
 
+          <Card className={beforeDeadline ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className={`p-3 rounded-xl ${beforeDeadline ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                  <Clock className={`w-5 h-5 ${beforeDeadline ? 'text-blue-600' : 'text-gray-600'}`} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Deadline Status</p>
+                  <p className={beforeDeadline ? 'text-blue-600' : 'text-gray-600'}>
+                    {beforeDeadline ? 'Before 9:00 AM ✓' : 'After 9:00 AM'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className={alreadySelected ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -249,6 +274,15 @@ export function WorkerDashboard({
         </div>
 
 
+
+        {!beforeDeadline && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              ⏰ Selection deadline has passed. Selections close at 9:00 AM daily.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {alreadySelected && todaySelection && (
           <Alert className="border-green-200 bg-green-50">
@@ -335,7 +369,7 @@ export function WorkerDashboard({
                   <h4 className="mb-2">Selection Requirements</h4>
                   <ul className="text-sm text-gray-700 space-y-1">
                     <li>🔒 You must be on-site to select</li>
-                    <li>🍽️ One meal selection per day</li>
+                    <li>🕒 Selection closes at 9:00 AM</li>
                   </ul>
                 </div>
               </div>

@@ -3,6 +3,7 @@ import { Button } from './ui/button'
 import { LogOut, UtensilsCrossed, LayoutDashboard, Calendar, FileText, Settings, Menu, X } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { User } from '../App'
+import logo from '../logo.png'
 
 interface ResponsiveSidebarProps {
   user: User
@@ -41,11 +42,9 @@ export function ResponsiveSidebar({ user, onLogout }: ResponsiveSidebarProps) {
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <UtensilsCrossed className="w-4 h-4 text-white" />
-            </div>
+            <img src={logo} alt="Ramoth Logo" className="w-8 h-8 object-contain" />
             <div>
-              <h1 className="font-semibold text-gray-900">Admin Panel</h1>
+              <h1 className="font-semibold text-gray-900">Ramoth Admin</h1>
               <p className="text-xs text-gray-600">{user.name}</p>
             </div>
           </div>
@@ -73,11 +72,9 @@ export function ResponsiveSidebar({ user, onLogout }: ResponsiveSidebarProps) {
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <UtensilsCrossed className="w-6 h-6 text-white" />
-              </div>
+              <img src={logo} alt="Ramoth Logo" className="w-10 h-10 object-contain" />
               <div>
-                <h2 className="font-bold text-gray-900">Menu App</h2>
+                <h2 className="font-bold text-gray-900">Ramoth Menu App</h2>
                 <p className="text-sm text-gray-600">Admin Panel</p>
               </div>
             </div>

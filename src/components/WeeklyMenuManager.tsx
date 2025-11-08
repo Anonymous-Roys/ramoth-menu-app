@@ -173,9 +173,7 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-32">Day</TableHead>
-                  <TableHead>Meal 1</TableHead>
-                  <TableHead>Meal 2</TableHead>
-                  <TableHead>Meal 3</TableHead>
+                  <TableHead>Meals</TableHead>
                   <TableHead className="w-20">+Add</TableHead>
                 </TableRow>
               </TableHeader>
@@ -190,28 +188,26 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
                           <p className="text-sm text-gray-500">{getFormattedDate(date)}</p>
                         </div>
                       </TableCell>
-                      {[0, 1, 2].map(idx => (
-                        <TableCell key={idx}>
-                          {meals[idx] ? (
-                            <div className="space-y-2">
+                      <TableCell>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {meals.map((meal, idx) => (
+                            <div key={idx} className="space-y-2 p-3 border rounded-lg">
                               <Input
                                 placeholder="Meal name"
-                                value={meals[idx].name}
+                                value={meal.name}
                                 onChange={(e) => handleMealChange(date, idx, 'name', e.target.value)}
                                 className="text-sm"
                               />
                               <Input
                                 placeholder="Description"
-                                value={meals[idx].description}
+                                value={meal.description}
                                 onChange={(e) => handleMealChange(date, idx, 'description', e.target.value)}
                                 className="text-sm"
                               />
                             </div>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </TableCell>
-                      ))}
+                          ))}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Button
                           onClick={() => handleAddMealOption(date)}
