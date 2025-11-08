@@ -3,8 +3,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { LogOut, MapPin, Clock, Check, AlertCircle, UtensilsCrossed, Calendar, User } from 'lucide-react';
 import { WeeklyMenuView } from './WeeklyMenuView';
 import type { User as UserType, DailyMenu, MealSelection } from '../App';
@@ -28,8 +27,6 @@ export function WorkerDashboard({
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [showWeeklyMenu, setShowWeeklyMenu] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [pendingSelection, setPendingSelection] = useState<{mealId: string, mealName: string} | null>(null);
 
   // Company location: 6.2025094, -1.7130153
   const COMPANY_LAT = 6.2025094;
@@ -92,7 +89,7 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 18;
+    return hours < 9;
   };
 
   const getTodayMenu = (): DailyMenu | null => {
@@ -116,14 +113,11 @@ export function WorkerDashboard({
       return;
     }
 
-    setPendingSelection({ mealId, mealName });
-    setShowConfirmDialog(true);
-  };
+    if (hasSelectedToday()) {
+      toast.error('You have already selected a meal for today');
+      return;
+    }
 
-  const confirmMealSelection = () => {
-    if (!pendingSelection) return;
-
-    const { mealId, mealName } = pendingSelection;
     const selection: MealSelection = {
       userId: user.id,
       userName: user.name,
@@ -136,23 +130,7 @@ export function WorkerDashboard({
 
     onMealSelection(selection);
     setSelectedMeal(mealId);
-    
-    if (hasSelectedToday()) {
-      toast.success(`Meal updated to ${mealName}!`);
-    } else {
-      toast.success(`${mealName} selected successfully!`);
-    }
-
-    setShowConfirmDialog(false);
-    setPendingSelection(null);
-  };
-
-  const handleUpdateSelection = (mealId: string, mealName: string) => {
-    if (!isOnSite || !isBeforeDeadline()) {
-      return;
-    }
-    
-    handleMealSelect(mealId, mealName);
+    toast.success(`${mealName} selected successfully!`);
   };
 
   if (showWeeklyMenu) {
@@ -190,8 +168,7 @@ export function WorkerDashboard({
   const alreadySelected = hasSelectedToday();
   const todaySelection = getTodaySelection();
   const beforeDeadline = isBeforeDeadline();
-  const canSelect = isOnSite && beforeDeadline;
-  const canUpdate = alreadySelected && canSelect;
+  const canSelect = isOnSite && beforeDeadline && !alreadySelected;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
@@ -308,8 +285,7 @@ export function WorkerDashboard({
           <Alert className="border-green-200 bg-green-50">
             <Check className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
-              ✅ You selected <strong>{todaySelection.mealName}</strong>. 
-              {canUpdate && <span className="ml-2">You can still update your selection.</span>}
+              ✅ You selected <strong>{todaySelection.mealName}</strong>. Thank you!
             </AlertDescription>
           </Alert>
         )}
@@ -321,10 +297,7 @@ export function WorkerDashboard({
               🍛 Today's Meals
             </CardTitle>
             <CardDescription>
-              {canSelect && !alreadySelected ? 'Select your preferred meal' : 
-               canUpdate ? 'Update your meal selection if needed' :
-               alreadySelected ? 'Your selection is confirmed' : 
-               'Selection is currently unavailable'}
+              {canSelect ? 'Select your preferred meal' : alreadySelected ? 'Your selection is confirmed' : 'Selection is currently unavailable'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -366,13 +339,9 @@ export function WorkerDashboard({
                                 e.stopPropagation();
                                 handleMealSelect(meal.id, meal.name);
                               }}
-                              className={`w-full ${
-                                isSelected 
-                                  ? 'bg-green-600 hover:bg-green-700' 
-                                  : 'bg-blue-600 hover:bg-blue-700'
-                              }`}
+                              className="w-full bg-blue-600 hover:bg-blue-700"
                             >
-                              {isSelected ? 'Update Selection' : 'Select Meal'}
+                              Select Meal
                             </Button>
                           )}
                         </div>
@@ -422,29 +391,6 @@ export function WorkerDashboard({
           </Card>
         </div>
       </div>
-
-      {/* Confirmation Dialog */}
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Meal Selection</DialogTitle>
-            <DialogDescription>
-              {hasSelectedToday() 
-                ? `Are you sure you want to update your selection to "${pendingSelection?.mealName}"?`
-                : `Are you sure you want to select "${pendingSelection?.mealName}" for today?`
-              }
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={confirmMealSelection}>
-              {hasSelectedToday() ? 'Update Selection' : 'Confirm Selection'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

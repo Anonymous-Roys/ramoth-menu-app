@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { LogOut, UtensilsCrossed, LayoutDashboard, Calendar, FileText, Settings } from 'lucide-react';
+import { LogOut, UtensilsCrossed, LayoutDashboard, Calendar, FileText, Settings, Menu, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { WeeklyMenuManager } from './WeeklyMenuManager';
 import { ReportGenerator } from './ReportGenerator';
 import { UserManagement } from './UserManagement';
@@ -25,10 +26,56 @@ export function AdminDashboard({
   onUpdateMenus
 }: AdminDashboardProps) {
   const [activeView, setActiveView] = useState<'dashboard' | 'menu' | 'reports' | 'users' | 'daily-report'>('dashboard');
+  const [totalWorkers, setTotalWorkers] = useState(0);
+  const [recentSelections, setRecentSelections] = useState<MealSelection[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch total workers
+      const { data: workers, error: workersError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('role', 'worker');
+
+      if (workersError) throw workersError;
+      setTotalWorkers(workers?.length || 0);
+
+      // Fetch recent selections with user data
+      const { data: selectionsData, error: selectionsError } = await supabase
+        .from('selections')
+        .select(`
+          *,
+          users!inner(name, department)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (selectionsError) throw selectionsError;
+
+      const formattedSelections: MealSelection[] = selectionsData?.map(selection => ({
+        userId: selection.user_id,
+        userName: selection.users.name,
+        department: selection.users.department,
+        mealId: selection.meal_id,
+        mealName: selection.meal_name,
+        date: selection.date,
+        time: new Date(selection.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      })) || [];
+
+      setRecentSelections(formattedSelections);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    }
+  };
 
   const getTodaySelections = () => {
     const today = new Date().toISOString().split('T')[0];
-    return selections.filter(s => s.date === today);
+    return recentSelections.filter(s => s.date === today);
   };
 
   const todaySelections = getTodaySelections();
@@ -54,17 +101,34 @@ export function AdminDashboard({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+      
       {/* Sidebar */}
-      <div className="w-64 bg-gradient-to-b from-blue-700 to-blue-900 text-white shadow-xl hidden md:block">
+      <div className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-blue-700 to-blue-900 text-white shadow-xl transform transition-transform duration-300 ease-in-out ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      } md:translate-x-0 md:block`}>
         <div className="p-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
-              <UtensilsCrossed className="w-6 h-6" />
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
+                <UtensilsCrossed className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-white">Menu App</h3>
+                <p className="text-sm text-blue-200">Admin Panel</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-white">Menu App</h3>
-              <p className="text-sm text-blue-200">Admin Panel</p>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden text-white hover:bg-white/10"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X className="w-5 h-5" />
+            </Button>
           </div>
 
           <nav className="space-y-2">
@@ -73,7 +137,10 @@ export function AdminDashboard({
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveView(item.id as any)}
+                  onClick={() => {
+                    setActiveView(item.id as any);
+                    setSidebarOpen(false);
+                  }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     activeView === item.id
                       ? 'bg-white text-blue-700 shadow-lg'
@@ -111,6 +178,14 @@ export function AdminDashboard({
         <div className="bg-white shadow-sm border-b md:hidden">
           <div className="px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen(true)}
+                className="text-gray-600 hover:bg-gray-100"
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
               <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-2 rounded-xl">
                 <UtensilsCrossed className="w-5 h-5 text-white" />
               </div>
@@ -125,22 +200,7 @@ export function AdminDashboard({
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        <div className="bg-white border-b px-4 py-2 md:hidden overflow-x-auto">
-          <div className="flex gap-2">
-            {sidebarItems.map((item) => (
-              <Button
-                key={item.id}
-                onClick={() => setActiveView(item.id as any)}
-                variant={activeView === item.id ? 'default' : 'outline'}
-                size="sm"
-                className={activeView === item.id ? 'bg-blue-600' : ''}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </div>
-        </div>
+
 
         {/* Content Area */}
         <div className="flex-1 overflow-auto">
@@ -181,11 +241,11 @@ export function AdminDashboard({
 
                     <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
                       <CardHeader>
-                        <CardTitle className="text-white text-sm">Total Employees</CardTitle>
+                        <CardTitle className="text-white text-sm">Total Workers</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-4xl">100-150</p>
-                        <p className="text-sm text-orange-100 mt-1">Expected daily selections</p>
+                        <p className="text-4xl">{totalWorkers}</p>
+                        <p className="text-sm text-orange-100 mt-1">Registered workers</p>
                       </CardContent>
                     </Card>
 
@@ -248,28 +308,28 @@ export function AdminDashboard({
                     <CardDescription>Latest meal selections from workers</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {todaySelections.length === 0 ? (
+                    {recentSelections.length === 0 ? (
                       <div className="text-center py-12 text-gray-500">
                         <UtensilsCrossed className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                        <p>No selections yet for today</p>
+                        <p>No selections yet</p>
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        {todaySelections.slice(0, 10).map((selection, index) => (
+                        {recentSelections.slice(0, 10).map((selection, index) => (
                           <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                             <div>
-                              <p>{selection.userName}</p>
+                              <p className="font-medium">{selection.userName}</p>
                               <p className="text-sm text-gray-600">{selection.department}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm">{selection.mealName}</p>
-                              <p className="text-sm text-gray-600">{selection.time}</p>
+                              <p className="text-sm font-medium">{selection.mealName}</p>
+                              <p className="text-sm text-gray-600">{selection.date} at {selection.time}</p>
                             </div>
                           </div>
                         ))}
-                        {todaySelections.length > 10 && (
+                        {recentSelections.length > 10 && (
                           <p className="text-sm text-gray-600 text-center pt-2">
-                            +{todaySelections.length - 10} more selections
+                            +{recentSelections.length - 10} more selections
                           </p>
                         )}
                       </div>
