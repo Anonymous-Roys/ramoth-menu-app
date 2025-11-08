@@ -117,7 +117,7 @@ export function AdminDashboard({
                 <UtensilsCrossed className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-white">Menu App</h3>
+                <h3 className="text-white">RamothMenu App</h3>
                 <p className="text-sm text-blue-200">Admin Panel</p>
               </div>
             </div>
