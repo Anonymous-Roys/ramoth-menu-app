@@ -135,18 +135,23 @@ export function WorkerDashboard({
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
         <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={logo} alt="Ramoth Logo" className="w-10 h-10 object-contain" />
-              <div>
-                <h2>Ramoth Menu App</h2>
-                <p className="text-sm text-gray-600">{user.name}</p>
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img src={logo} alt="Ramoth Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
+                <div>
+                  <h2 className="text-lg sm:text-xl font-semibold">Ramoth Menu App</h2>
+                  <p className="text-xs sm:text-sm text-gray-600">{user.name}</p>
+                </div>
               </div>
+              <Button onClick={onLogout} variant="outline" size="sm" className="hidden sm:flex">
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+              <Button onClick={onLogout} variant="outline" size="sm" className="sm:hidden">
+                <LogOut className="w-4 h-4" />
+              </Button>
             </div>
-            <Button onClick={onLogout} variant="outline" size="sm">
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
           </div>
         </div>
 
@@ -171,23 +176,31 @@ export function WorkerDashboard({
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="Ramoth Logo" className="w-10 h-10 object-contain" />
-            <div>
-              <h2>Ramoth Menu App</h2>
-              <p className="text-sm text-gray-600">{user.name}</p>
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img src={logo} alt="Ramoth Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
+              <div>
+                <h2 className="text-lg sm:text-xl font-semibold">Ramoth Menu App</h2>
+                <p className="text-xs sm:text-sm text-gray-600">{user.name}</p>
+              </div>
             </div>
-          </div>
-          <div className="md:flex md:gap-2">
-            <Button className=" mb-1" onClick={() => setShowWeeklyMenu(true)} variant="outline" size="sm">
-              <Calendar className="w-4 h-4 mr-2" />
-              Weekly Menu
-            </Button>
-            <Button className="mb-1 ml-1" onClick={onLogout} variant="outline" size="sm">
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button onClick={() => setShowWeeklyMenu(true)} variant="outline" size="sm" className="hidden sm:flex">
+                <Calendar className="w-4 h-4 mr-2" />
+                Weekly Menu
+              </Button>
+              <Button onClick={() => setShowWeeklyMenu(true)} variant="outline" size="sm" className="sm:hidden">
+                <Calendar className="w-4 h-4" />
+              </Button>
+              <Button onClick={onLogout} variant="outline" size="sm" className="hidden sm:flex">
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+              <Button onClick={onLogout} variant="outline" size="sm" className="sm:hidden">
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>

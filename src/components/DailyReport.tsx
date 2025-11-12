@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { toast } from 'sonner'
 import { Download, Users, CheckCircle, XCircle, Search, Calendar } from 'lucide-react'
 import jsPDF from 'jspdf'
+import logo from '../logo.png'
 
 interface WorkerReport {
   id: string
@@ -86,74 +87,118 @@ export function DailyReport() {
     const pdf = new jsPDF()
     const pageWidth = pdf.internal.pageSize.width
     
-    // Header
-    pdf.setFontSize(20)
-    pdf.text('Daily Meal Selection Report', pageWidth / 2, 20, { align: 'center' })
-    
-    pdf.setFontSize(12)
-    pdf.text(`Date: ${new Date(selectedDate).toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    })}`, pageWidth / 2, 30, { align: 'center' })
-    
-    pdf.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 40, { align: 'center' })
-    
-    // Stats
-    pdf.setFontSize(14)
-    pdf.text('Summary:', 20, 60)
-    pdf.setFontSize(11)
-    pdf.text(`Total Workers: ${stats.total}`, 20, 70)
-    pdf.text(`Selected Meals: ${stats.selected}`, 20, 80)
-    pdf.text(`Not Selected: ${stats.notSelected}`, 20, 90)
-    pdf.text(`Selection Rate: ${((stats.selected / stats.total) * 100).toFixed(1)}%`, 20, 100)
-    
-    // Workers who selected
-    let yPos = 120
-    pdf.setFontSize(14)
-    pdf.text('Workers Who Selected:', 20, yPos)
-    yPos += 10
-    
-    pdf.setFontSize(10)
-    const selectedWorkers = workers.filter(w => w.hasSelected)
-    selectedWorkers.forEach((worker, index) => {
-      if (yPos > 270) {
-        pdf.addPage()
-        yPos = 20
-      }
-      pdf.text(`${index + 1}. ${worker.name} (${worker.department}) - ${worker.mealName} at ${worker.selectionTime}`, 20, yPos)
-      yPos += 8
-    })
-    
-    // Workers who didn't select
-    if (stats.notSelected > 0) {
-      yPos += 10
-      if (yPos > 270) {
-        pdf.addPage()
-        yPos = 20
-      }
+    // Add logo
+    const img = new Image()
+    img.onload = () => {
+      // Header background with Ramoth blue
+      pdf.setFillColor(37, 99, 235) // Blue-600
+      pdf.rect(0, 0, pageWidth, 50, 'F')
       
+      // Logo
+      pdf.addImage(img, 'PNG', 20, 10, 30, 30)
+      
+      // Company name and title
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFontSize(24)
+      pdf.text('RAMOTH', 60, 25)
+      pdf.setFontSize(12)
+      pdf.text('Daily Meal Selection Report', 60, 35)
+      
+      // Date and generation info
+      pdf.setTextColor(0, 0, 0)
       pdf.setFontSize(14)
-      pdf.text('Workers Who Did Not Select:', 20, yPos)
-      yPos += 10
+      pdf.text(`Report Date: ${new Date(selectedDate).toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })}`, 20, 70)
       
       pdf.setFontSize(10)
-      const notSelectedWorkers = workers.filter(w => !w.hasSelected)
-      notSelectedWorkers.forEach((worker, index) => {
+      pdf.text(`Generated: ${new Date().toLocaleString()}`, 20, 80)
+      
+      // Summary stats box
+      pdf.setFillColor(239, 246, 255) // Blue-50
+      pdf.rect(20, 90, pageWidth - 40, 30, 'F')
+      pdf.setDrawColor(37, 99, 235)
+      pdf.rect(20, 90, pageWidth - 40, 30, 'S')
+      
+      pdf.setFontSize(12)
+      pdf.setTextColor(37, 99, 235)
+      pdf.text('Summary Statistics', 25, 105)
+      
+      pdf.setFontSize(10)
+      pdf.setTextColor(0, 0, 0)
+      pdf.text(`Total Workers: ${stats.total}`, 25, 112)
+      pdf.text(`Selected Meals: ${stats.selected}`, 100, 112)
+      pdf.text(`Selection Rate: ${((stats.selected / stats.total) * 100).toFixed(1)}%`, 25, 118)
+      
+      // Manual table creation
+      const selectedWorkers = workers.filter(w => w.hasSelected)
+      let yPos = 130
+      
+      // Table header
+      pdf.setFillColor(37, 99, 235) // Blue-600
+      pdf.rect(20, yPos, pageWidth - 40, 12, 'F')
+      
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFontSize(11)
+      pdf.text('#', 25, yPos + 8)
+      pdf.text('Name', 40, yPos + 8)
+      pdf.text('Department', 85, yPos + 8)
+      pdf.text('Meal Selected', 120, yPos + 8)
+      pdf.text('Time', 155, yPos + 8)
+      pdf.text('Collected', 175, yPos + 8)
+      
+      yPos += 12
+      
+      // Table rows
+      pdf.setTextColor(0, 0, 0)
+      pdf.setFontSize(10)
+      
+      selectedWorkers.forEach((worker, index) => {
         if (yPos > 270) {
           pdf.addPage()
           yPos = 20
         }
-        pdf.text(`${index + 1}. ${worker.name} (${worker.department})`, 20, yPos)
-        yPos += 8
+        
+        // Alternate row colors
+        if (index % 2 === 1) {
+          pdf.setFillColor(248, 250, 252) // Gray-50
+          pdf.rect(20, yPos, pageWidth - 40, 10, 'F')
+        }
+        
+        // Row border
+        pdf.setDrawColor(229, 231, 235) // Gray-200
+        pdf.rect(20, yPos, pageWidth - 40, 10, 'S')
+        
+        // Cell content
+        pdf.text((index + 1).toString(), 25, yPos + 7)
+        pdf.text(worker.name.substring(0, 18), 40, yPos + 7)
+        pdf.text(worker.department.substring(0, 12), 85, yPos + 7)
+        pdf.text(worker.mealName?.substring(0, 15) || '', 120, yPos + 7)
+        pdf.text(worker.selectionTime || '', 155, yPos + 7)
+        
+        // Checkbox for collection tracking
+        pdf.setDrawColor(0, 0, 0)
+        pdf.rect(178, yPos + 2, 6, 6, 'S')
+        
+        yPos += 10
       })
+      
+      // Footer
+      const finalY = yPos + 10
+      pdf.setFontSize(8)
+      pdf.setTextColor(107, 114, 128) // Gray-500
+      pdf.text('Ramoth Menu Management System', pageWidth / 2, finalY + 10, { align: 'center' })
+      
+      // Save PDF
+      const fileName = `ramoth-meal-report-${selectedDate}.pdf`
+      pdf.save(fileName)
+      toast.success('Report downloaded successfully!')
     }
     
-    // Save PDF
-    const fileName = `meal-report-${selectedDate}.pdf`
-    pdf.save(fileName)
-    toast.success('Report downloaded successfully!')
+    img.src = logo
   }
 
   return (
