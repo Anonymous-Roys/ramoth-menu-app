@@ -3,6 +3,7 @@ import { WorkerDashboard } from '../components/WorkerDashboard'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { User, DailyMenu, MealSelection } from '../App'
+import { toast } from 'sonner@2.0.3';
 
 export function MenuPage() {
   const navigate = useNavigate()
@@ -135,6 +136,28 @@ export function MenuPage() {
     }
   }
 
+  const handleMealDeselection = async (userId: string, date: string) => {
+  try {
+    const confirm = window.confirm('Are you sure you want to remove your meal selection?');
+    if (!confirm) return;
+
+    const { error } = await supabase
+      .from('selections')
+      .delete()
+      .eq('user_id', userId)
+      .eq('date', date);
+
+    if (error) throw error;
+
+    setSelections(prev => prev.filter(s => !(s.userId === userId && s.date === date)));
+    toast.success('Meal selection removed successfully!');
+  } catch (error) {
+    console.error('Failed to remove selection:', error);
+    toast.error('Failed to remove meal selection. Please try again.');
+  }
+};
+
+
   if (!currentUser || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center">
@@ -147,12 +170,14 @@ export function MenuPage() {
   }
 
   return (
-    <WorkerDashboard
-      user={currentUser}
-      weeklyMenus={weeklyMenus}
-      selections={selections}
-      onLogout={handleLogout}
-      onMealSelection={handleMealSelection}
-    />
-  )
+  <WorkerDashboard
+  user={currentUser}
+  weeklyMenus={weeklyMenus}
+  selections={selections}
+  onLogout={handleLogout}
+  onMealSelection={handleMealSelection}
+  onMealDeselection={handleMealDeselection} // ✅ correct casing & name
+/>
+
+);
 }

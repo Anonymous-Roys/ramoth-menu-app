@@ -24,7 +24,8 @@ export function WorkerDashboard({
   weeklyMenus, 
   selections, 
   onLogout, 
-  onMealSelection 
+  onMealSelection,
+  onMealDeselection // ✅ include this prop
 }: WorkerDashboardProps) {
   const [isOnSite, setIsOnSite] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -109,7 +110,7 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 12;
+    return hours < 23;
   };
 
   const handleMealSelect = (mealId: string, mealName: string) => {
@@ -141,20 +142,23 @@ export function WorkerDashboard({
   };
 
   const handleMealDeselect = () => {
-    if (!isBeforeDeadline()) {
-      toast.error('Selection deadline has passed (12:00 PM)');
-      return;
-    }
+  if (!isBeforeDeadline()) {
+    toast.error('Selection deadline has passed (12:00 PM)');
+    return;
+  }
 
-    if (window.confirm('Are you sure you want to remove your meal selection?')) {
-      const today = new Date().toISOString().split('T')[0];
-      if (onMealDeselection) {
-        onMealDeselection(user.id, today);
-      }
+  if (window.confirm('Are you sure you want to remove your meal selection?')) {
+    const today = new Date().toISOString().split('T')[0];
+    if (onMealDeselection) {
+      onMealDeselection(user.id, today); // ✅ now this works
       setSelectedMeal(null);
       toast.success('Meal selection removed successfully!');
+    } else {
+      toast.error('Meal deselection function not available.');
     }
-  };
+  }
+};
+
 
   if (showWeeklyMenu) {
     return (
