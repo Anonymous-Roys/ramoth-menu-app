@@ -135,6 +135,25 @@ export function MenuPage() {
     }
   }
 
+  const handleMealDeselection = async (userId: string, date: string) => {
+    try {
+      const { error } = await supabase
+        .from('selections')
+        .delete()
+        .eq('user_id', userId)
+        .eq('date', date)
+
+      if (error) throw error
+      
+      // Update local state
+      setSelections(prev => 
+        prev.filter(s => !(s.userId === userId && s.date === date))
+      )
+    } catch (error) {
+      console.error('Failed to deselect meal:', error)
+    }
+  }
+
   if (!currentUser || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center">
@@ -153,6 +172,7 @@ export function MenuPage() {
       selections={selections}
       onLogout={handleLogout}
       onMealSelection={handleMealSelection}
+      onMealDeselection={handleMealDeselection}
     />
   )
 }

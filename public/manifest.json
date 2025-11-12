@@ -1,0 +1,27 @@
+{
+  "name": "Ramoth Menu App",
+  "short_name": "Ramoth Menu",
+  "description": "Select your daily meals at Ramoth",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["food", "business", "productivity"],
+  "lang": "en",
+  "dir": "ltr"
+}
