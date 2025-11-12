@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { LogOut, MapPin, Clock, Check, AlertCircle, UtensilsCrossed, Calendar, User } from 'lucide-react';
 import { WeeklyMenuView } from './WeeklyMenuView';
 import { NotificationSystem } from './NotificationSystem';
@@ -113,6 +113,12 @@ export function WorkerDashboard({
     return hours < 23;
   };
 
+  const todayMenu = getTodayMenu();
+  const alreadySelected = hasSelectedToday();
+  const todaySelection = getTodaySelection();
+  const beforeDeadline = isBeforeDeadline();
+  const canSelect = isOnSite && beforeDeadline;
+
   const handleMealSelect = (mealId: string, mealName: string) => {
     if (!isBeforeDeadline()) {
       toast.error('Selection deadline has passed (12:00 PM)');
@@ -141,7 +147,9 @@ export function WorkerDashboard({
     }
   };
 
-  const handleMealDeselect = () => {
+  const handleMealDeselect = (e: React.MouseEvent) => {
+  e.stopPropagation(); // ✅ prevents double firing due to event bubbling
+
   if (!isBeforeDeadline()) {
     toast.error('Selection deadline has passed (12:00 PM)');
     return;
@@ -150,7 +158,7 @@ export function WorkerDashboard({
   if (window.confirm('Are you sure you want to remove your meal selection?')) {
     const today = new Date().toISOString().split('T')[0];
     if (onMealDeselection) {
-      onMealDeselection(user.id, today); // ✅ now this works
+      onMealDeselection(user.id, today);
       setSelectedMeal(null);
       toast.success('Meal selection removed successfully!');
     } else {
@@ -158,6 +166,7 @@ export function WorkerDashboard({
     }
   }
 };
+
 
 
   if (showWeeklyMenu) {
@@ -194,11 +203,7 @@ export function WorkerDashboard({
     );
   }
 
-  const todayMenu = getTodayMenu();
-  const alreadySelected = hasSelectedToday();
-  const todaySelection = getTodaySelection();
-  const beforeDeadline = isBeforeDeadline();
-  const canSelect = isOnSite && beforeDeadline;
+  
   // const canSelect = true;
 
   return (
@@ -393,10 +398,7 @@ export function WorkerDashboard({
                           )}
                           {canSelect && isSelected && (
                             <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleMealDeselect();
-                              }}
+                              onClick={handleMealDeselect}
                               variant="outline"
                               className="w-full border-red-300 text-red-600 hover:bg-red-50"
                             >

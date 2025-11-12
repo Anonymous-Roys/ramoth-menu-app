@@ -3,7 +3,8 @@ import { WorkerDashboard } from '../components/WorkerDashboard'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { User, DailyMenu, MealSelection } from '../App'
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+
 
 export function MenuPage() {
   const navigate = useNavigate()
@@ -138,9 +139,6 @@ export function MenuPage() {
 
   const handleMealDeselection = async (userId: string, date: string) => {
   try {
-    const confirm = window.confirm('Are you sure you want to remove your meal selection?');
-    if (!confirm) return;
-
     const { error } = await supabase
       .from('selections')
       .delete()
@@ -156,6 +154,8 @@ export function MenuPage() {
     toast.error('Failed to remove meal selection. Please try again.');
   }
 };
+
+
 
 
   if (!currentUser || isLoading) {
