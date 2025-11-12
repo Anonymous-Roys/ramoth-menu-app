@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { LogOut, MapPin, Clock, Check, AlertCircle, UtensilsCrossed, Calendar, User } from 'lucide-react';
 import { WeeklyMenuView } from './WeeklyMenuView';
 import { NotificationSystem } from './NotificationSystem';
@@ -24,7 +24,8 @@ export function WorkerDashboard({
   weeklyMenus, 
   selections, 
   onLogout, 
-  onMealSelection 
+  onMealSelection,
+  onMealDeselection // ✅ include this prop
 }: WorkerDashboardProps) {
   const [isOnSite, setIsOnSite] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -109,8 +110,14 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 12;
+    return hours < 23;
   };
+
+  const todayMenu = getTodayMenu();
+  const alreadySelected = hasSelectedToday();
+  const todaySelection = getTodaySelection();
+  const beforeDeadline = isBeforeDeadline();
+  const canSelect = isOnSite && beforeDeadline;
 
   const handleMealSelect = (mealId: string, mealName: string) => {
     if (!isBeforeDeadline()) {
@@ -140,21 +147,27 @@ export function WorkerDashboard({
     }
   };
 
-  const handleMealDeselect = () => {
-    if (!isBeforeDeadline()) {
-      toast.error('Selection deadline has passed (12:00 PM)');
-      return;
-    }
+  const handleMealDeselect = (e: React.MouseEvent) => {
+  e.stopPropagation(); // ✅ prevents double firing due to event bubbling
 
-    if (window.confirm('Are you sure you want to remove your meal selection?')) {
-      const today = new Date().toISOString().split('T')[0];
-      if (onMealDeselection) {
-        onMealDeselection(user.id, today);
-      }
+  if (!isBeforeDeadline()) {
+    toast.error('Selection deadline has passed (12:00 PM)');
+    return;
+  }
+
+  if (window.confirm('Are you sure you want to remove your meal selection?')) {
+    const today = new Date().toISOString().split('T')[0];
+    if (onMealDeselection) {
+      onMealDeselection(user.id, today);
       setSelectedMeal(null);
       toast.success('Meal selection removed successfully!');
+    } else {
+      toast.error('Meal deselection function not available.');
     }
-  };
+  }
+};
+
+
 
   if (showWeeklyMenu) {
     return (
@@ -190,11 +203,7 @@ export function WorkerDashboard({
     );
   }
 
-  const todayMenu = getTodayMenu();
-  const alreadySelected = hasSelectedToday();
-  const todaySelection = getTodaySelection();
-  const beforeDeadline = isBeforeDeadline();
-  const canSelect = isOnSite && beforeDeadline;
+  
   // const canSelect = true;
 
   return (
@@ -389,10 +398,7 @@ export function WorkerDashboard({
                           )}
                           {canSelect && isSelected && (
                             <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleMealDeselect();
-                              }}
+                              onClick={handleMealDeselect}
                               variant="outline"
                               className="w-full border-red-300 text-red-600 hover:bg-red-50"
                             >
