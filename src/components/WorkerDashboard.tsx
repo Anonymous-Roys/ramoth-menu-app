@@ -117,19 +117,26 @@ export function WorkerDashboard({
       return;
     }
 
-    const selection: MealSelection = {
-      userId: user.id,
-      userName: user.name,
-      department: user.department,
-      mealId,
-      mealName,
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    };
+    const isUpdate = alreadySelected;
+    const message = isUpdate 
+      ? `Are you sure you want to update your selection to ${mealName}?`
+      : `Are you sure you want to select ${mealName}?`;
 
-    onMealSelection(selection);
-    setSelectedMeal(mealId);
-    toast.success(`${mealName} selected successfully!`);
+    if (window.confirm(message)) {
+      const selection: MealSelection = {
+        userId: user.id,
+        userName: user.name,
+        department: user.department,
+        mealId,
+        mealName,
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      onMealSelection(selection);
+      setSelectedMeal(mealId);
+      toast.success(isUpdate ? `Selection updated to ${mealName}!` : `${mealName} selected successfully!`);
+    }
   };
 
   if (showWeeklyMenu) {
@@ -170,7 +177,7 @@ export function WorkerDashboard({
   const alreadySelected = hasSelectedToday();
   const todaySelection = getTodaySelection();
   const beforeDeadline = isBeforeDeadline();
-  const canSelect = isOnSite && beforeDeadline && !alreadySelected;
+  const canSelect = isOnSite && beforeDeadline;
   // const canSelect = true;
 
   return (
@@ -316,7 +323,7 @@ export function WorkerDashboard({
               🍛 Today's Meals
             </CardTitle>
             <CardDescription>
-              {alreadySelected ? 'Click to change your selection' : 'Select your preferred meal'}
+              {alreadySelected ? 'Click to update your selection (before 12:00 PM)' : 'Select your preferred meal'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -360,7 +367,7 @@ export function WorkerDashboard({
                               }}
                               className="w-full bg-blue-600 hover:bg-blue-700"
                             >
-                              Select Meal
+                              {isSelected ? 'Update Selection' : 'Select Meal'}
                             </Button>
                           )}
                         </div>
