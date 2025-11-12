@@ -179,12 +179,12 @@ export function WorkerDashboard({
               <p className="text-sm text-gray-600">{user.name}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setShowWeeklyMenu(true)} variant="outline" size="sm">
+          <div className="md:flex md:gap-2">
+            <Button className=" mb-1" onClick={() => setShowWeeklyMenu(true)} variant="outline" size="sm">
               <Calendar className="w-4 h-4 mr-2" />
               Weekly Menu
             </Button>
-            <Button onClick={onLogout} variant="outline" size="sm">
+            <Button className="mb-1 ml-1" onClick={onLogout} variant="outline" size="sm">
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>
