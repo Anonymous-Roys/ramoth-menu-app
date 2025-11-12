@@ -141,7 +141,7 @@ export function UserList() {
                   <Input
                     value={editingUser.department}
                     onChange={(e) => setEditingUser({...editingUser, department: e.target.value})}
-                    placeholder="Department"
+                    placeholder="Job Title"
                   />
                   <Input
                     value={editingUser.email || ''}

@@ -6,6 +6,7 @@ import { Badge } from './ui/badge';
 import { toast } from 'sonner@2.0.3';
 import { LogOut, MapPin, Clock, Check, AlertCircle, UtensilsCrossed, Calendar, User } from 'lucide-react';
 import { WeeklyMenuView } from './WeeklyMenuView';
+import { NotificationSystem } from './NotificationSystem';
 import type { User as UserType, DailyMenu, MealSelection } from '../App';
 import logo from '../logo.png';
 
@@ -111,10 +112,10 @@ export function WorkerDashboard({
   };
 
   const handleMealSelect = (mealId: string, mealName: string) => {
-    // if (!isBeforeDeadline()) {
-    //   toast.error('Selection deadline has passed (12:00 PM)');
-    //   return;
-    // }
+    if (!isBeforeDeadline()) {
+      toast.error('Selection deadline has passed (12:00 PM)');
+      return;
+    }
 
     const selection: MealSelection = {
       userId: user.id,
@@ -169,11 +170,18 @@ export function WorkerDashboard({
   const alreadySelected = hasSelectedToday();
   const todaySelection = getTodaySelection();
   const beforeDeadline = isBeforeDeadline();
-  // const canSelect = isOnSite && beforeDeadline && !alreadySelected;
-  const canSelect = true;
+  const canSelect = isOnSite && beforeDeadline && !alreadySelected;
+  // const canSelect = true;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+      {/* Notification System */}
+      <NotificationSystem 
+        hasSelectedToday={alreadySelected}
+        currentTime={currentTime}
+        userId={user.id}
+      />
+      
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">

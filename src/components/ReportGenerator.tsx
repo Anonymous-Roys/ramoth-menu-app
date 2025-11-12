@@ -80,7 +80,7 @@ export function ReportGenerator({ selections, weeklyMenus }: ReportGeneratorProp
       if (mealSelections.length === 0) {
         report += `No selections for this meal\n\n`;
       } else {
-        report += `No.  Name${' '.repeat(30)}Department${' '.repeat(15)}Time Selected\n`;
+        report += `No.  Name${' '.repeat(30)}Job Title${' '.repeat(15)}Time Selected\n`;
         report += `${'-'.repeat(80)}\n`;
         mealSelections.forEach((selection, index) => {
           const no = `${index + 1}.`.padEnd(5);
@@ -275,7 +275,7 @@ export function ReportGenerator({ selections, weeklyMenus }: ReportGeneratorProp
                                   <TableRow>
                                     <TableHead>No.</TableHead>
                                     <TableHead>Name</TableHead>
-                                    <TableHead>Department</TableHead>
+                                    <TableHead>Job Title</TableHead>
                                     <TableHead>Time</TableHead>
                                   </TableRow>
                                 </TableHeader>

@@ -140,7 +140,7 @@ export function UserManagement({ onUserCreated }: UserManagementProps) {
           </div>
 
           <div>
-            <Label htmlFor="department">Department *</Label>
+            <Label htmlFor="department">Job Title *</Label>
             <Input
               id="department"
               value={formData.department}

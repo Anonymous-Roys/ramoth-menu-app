@@ -117,25 +117,51 @@ export function DailyReport() {
       pdf.setFontSize(10)
       pdf.text(`Generated: ${new Date().toLocaleString()}`, 20, 80)
       
-      // Summary stats box
-      pdf.setFillColor(239, 246, 255) // Blue-50
-      pdf.rect(20, 90, pageWidth - 40, 30, 'F')
-      pdf.setDrawColor(37, 99, 235)
-      pdf.rect(20, 90, pageWidth - 40, 30, 'S')
+      // Calculate meal breakdown
+      const selectedWorkers = workers.filter(w => w.hasSelected)
+      const mealCounts = selectedWorkers.reduce((acc, worker) => {
+        const meal = worker.mealName || 'Unknown'
+        acc[meal] = (acc[meal] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
       
+      // Summary stats box - calculate proper height with padding
+      const mealBreakdownLines = Object.keys(mealCounts).length
+      const summaryHeight = 60 + (mealBreakdownLines * 10)
+      pdf.setFillColor(239, 246, 255) // Blue-50
+      pdf.rect(20, 90, pageWidth - 40, summaryHeight, 'F')
+      pdf.setDrawColor(37, 99, 235)
+      pdf.rect(20, 90, pageWidth - 40, summaryHeight, 'S')
+      
+      // Summary Statistics section with proper padding
       pdf.setFontSize(12)
       pdf.setTextColor(37, 99, 235)
       pdf.text('Summary Statistics', 25, 105)
       
       pdf.setFontSize(10)
       pdf.setTextColor(0, 0, 0)
-      pdf.text(`Total Workers: ${stats.total}`, 25, 112)
-      pdf.text(`Selected Meals: ${stats.selected}`, 100, 112)
-      pdf.text(`Selection Rate: ${((stats.selected / stats.total) * 100).toFixed(1)}%`, 25, 118)
+      pdf.text(`Total Workers: ${stats.total}`, 25, 118)
+      pdf.text(`Selected Meals: ${stats.selected}`, 100, 118)
+      pdf.text(`Selection Rate: ${((stats.selected / stats.total) * 100).toFixed(1)}%`, 25, 130)
       
-      // Manual table creation
-      const selectedWorkers = workers.filter(w => w.hasSelected)
-      let yPos = 130
+      // Meal breakdown section with more spacing
+      let mealYPos = 145
+      pdf.setFontSize(11)
+      pdf.setTextColor(37, 99, 235)
+      pdf.text('Meal Breakdown:', 25, mealYPos)
+      mealYPos += 10
+      
+      pdf.setFontSize(9)
+      pdf.setTextColor(0, 0, 0)
+      Object.entries(mealCounts).forEach(([meal, count]) => {
+        if (mealYPos < 90 + summaryHeight - 5) { // Ensure text stays within box
+          pdf.text(`• ${meal}: ${count} worker${count !== 1 ? 's' : ''}`, 30, mealYPos)
+          mealYPos += 10
+        }
+      })
+      
+      // Manual table creation - add more spacing
+      let yPos = 90 + summaryHeight + 15
       
       // Table header
       pdf.setFillColor(37, 99, 235) // Blue-600
@@ -145,7 +171,7 @@ export function DailyReport() {
       pdf.setFontSize(11)
       pdf.text('#', 25, yPos + 8)
       pdf.text('Name', 40, yPos + 8)
-      pdf.text('Department', 85, yPos + 8)
+      pdf.text('Job Title', 85, yPos + 8)
       pdf.text('Meal Selected', 120, yPos + 8)
       pdf.text('Time', 155, yPos + 8)
       pdf.text('Collected', 175, yPos + 8)
