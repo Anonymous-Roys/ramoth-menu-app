@@ -16,6 +16,7 @@ interface WorkerDashboardProps {
   selections: MealSelection[];
   onLogout: () => void;
   onMealSelection: (selection: MealSelection) => void;
+  onMealDeselection?: (userId: string, date: string) => void;
 }
 
 export function WorkerDashboard({ 
@@ -136,6 +137,22 @@ export function WorkerDashboard({
       onMealSelection(selection);
       setSelectedMeal(mealId);
       toast.success(isUpdate ? `Selection updated to ${mealName}!` : `${mealName} selected successfully!`);
+    }
+  };
+
+  const handleMealDeselect = () => {
+    if (!isBeforeDeadline()) {
+      toast.error('Selection deadline has passed (12:00 PM)');
+      return;
+    }
+
+    if (window.confirm('Are you sure you want to remove your meal selection?')) {
+      const today = new Date().toISOString().split('T')[0];
+      if (onMealDeselection) {
+        onMealDeselection(user.id, today);
+      }
+      setSelectedMeal(null);
+      toast.success('Meal selection removed successfully!');
     }
   };
 
@@ -359,7 +376,7 @@ export function WorkerDashboard({
                             )}
                           </div>
                           <p className="text-sm text-gray-600">{meal.description}</p>
-                          {canSelect && (
+                          {canSelect && !isSelected && (
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -367,7 +384,19 @@ export function WorkerDashboard({
                               }}
                               className="w-full bg-blue-600 hover:bg-blue-700"
                             >
-                              {isSelected ? 'Update Selection' : 'Select Meal'}
+                              Select Meal
+                            </Button>
+                          )}
+                          {canSelect && isSelected && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMealDeselect();
+                              }}
+                              variant="outline"
+                              className="w-full border-red-300 text-red-600 hover:bg-red-50"
+                            >
+                              Deselect
                             </Button>
                           )}
                         </div>
