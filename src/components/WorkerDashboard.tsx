@@ -10,6 +10,8 @@ import { NotificationSystem } from './NotificationSystem';
 import type { User as UserType, DailyMenu, MealSelection } from '../App';
 import logo from '../logo.png';
 
+
+
 interface WorkerDashboardProps {
   user: UserType;
   weeklyMenus: DailyMenu[];
@@ -125,12 +127,6 @@ export function WorkerDashboard({
       return;
     }
 
-    const isUpdate = alreadySelected;
-    const message = isUpdate 
-      ? `Are you sure you want to update your selection to ${mealName}?`
-      : `Are you sure you want to select ${mealName}?`;
-
-    if (window.confirm(message)) {
       const selection: MealSelection = {
         userId: user.id,
         userName: user.name,
@@ -143,8 +139,7 @@ export function WorkerDashboard({
 
       onMealSelection(selection);
       setSelectedMeal(mealId);
-      toast.success(isUpdate ? `Selection updated to ${mealName}!` : `${mealName} selected successfully!`);
-    }
+      toast.success(`${mealName} selected successfully!`);
   };
 
   const handleMealDeselect = (e: React.MouseEvent) => {
@@ -154,8 +149,6 @@ export function WorkerDashboard({
     toast.error('Selection deadline has passed (12:00 PM)');
     return;
   }
-
-  if (window.confirm('Are you sure you want to remove your meal selection?')) {
     const today = new Date().toISOString().split('T')[0];
     if (onMealDeselection) {
       onMealDeselection(user.id, today);
@@ -164,7 +157,6 @@ export function WorkerDashboard({
     } else {
       toast.error('Meal deselection function not available.');
     }
-  }
 };
 
 
@@ -402,7 +394,7 @@ export function WorkerDashboard({
                               variant="outline"
                               className="w-full border-red-300 text-red-600 hover:bg-red-50"
                             >
-                              Deselect
+                              Cancel
                             </Button>
                           )}
                         </div>
