@@ -33,7 +33,7 @@ export function WorkerDashboard({
   // Company location: 6.2025094, -1.7130153
   const COMPANY_LAT = 6.2025094;
   const COMPANY_LNG = -1.7130153;
-  const RADIUS_METERS = 100;
+  const RADIUS_METERS = 10000;
 
   useEffect(() => {
     const timer = setInterval(() => {
