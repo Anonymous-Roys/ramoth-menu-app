@@ -140,9 +140,9 @@ export function DailyReport() {
       
       pdf.setFontSize(10)
       pdf.setTextColor(0, 0, 0)
-      pdf.text(`Total Workers: ${stats.total}`, 25, 118)
+      // pdf.text(`Total Workers: ${stats.total}`, 25, 118)
       pdf.text(`Selected Meals: ${stats.selected}`, 100, 118)
-      pdf.text(`Selection Rate: ${((stats.selected / stats.total) * 100).toFixed(1)}%`, 25, 130)
+      // pdf.text(`Selection Rate: ${((stats.selected / stats.total) * 100).toFixed(1)}%`, 25, 130)
       
       // Meal breakdown section with more spacing
       let mealYPos = 145
