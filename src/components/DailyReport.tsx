@@ -119,46 +119,43 @@ export function DailyReport() {
       
       // Calculate meal breakdown
       const selectedWorkers = workers.filter(w => w.hasSelected)
+      // Group workers by department
+      const groupedByDepartment = selectedWorkers.reduce((groups, worker) => {
+        if (!groups[worker.department]) groups[worker.department] = []
+        groups[worker.department].push(worker)
+        return groups
+      }, {} as Record<string, WorkerReport[]>)
+
       const mealCounts = selectedWorkers.reduce((acc, worker) => {
         const meal = worker.mealName || 'Unknown'
         acc[meal] = (acc[meal] || 0) + 1
         return acc
       }, {} as Record<string, number>)
       
-      // Summary stats box - calculate proper height with padding
+      // Summary box height based on number of meals
       const mealBreakdownLines = Object.keys(mealCounts).length
-      const summaryHeight = 60 + (mealBreakdownLines * 10)
-      pdf.setFillColor(239, 246, 255) // Blue-50
+      const summaryHeight = 40 + (mealBreakdownLines * 10)
+
+      pdf.setFillColor(239, 246, 255)
       pdf.rect(20, 90, pageWidth - 40, summaryHeight, 'F')
       pdf.setDrawColor(37, 99, 235)
       pdf.rect(20, 90, pageWidth - 40, summaryHeight, 'S')
-      
-      // Summary Statistics section with proper padding
+
+      // Title
       pdf.setFontSize(12)
       pdf.setTextColor(37, 99, 235)
-      pdf.text('Summary Statistics', 25, 105)
-      
+      pdf.text('Meal Breakdown', 25, 105)
+
+      // Meal breakdown list
+      let mealYPos = 120
       pdf.setFontSize(10)
       pdf.setTextColor(0, 0, 0)
-      // pdf.text(`Total Workers: ${stats.total}`, 25, 118)
-      pdf.text(`Selected Meals: ${stats.selected}`, 100, 118)
-      // pdf.text(`Selection Rate: ${((stats.selected / stats.total) * 100).toFixed(1)}%`, 25, 130)
-      
-      // Meal breakdown section with more spacing
-      let mealYPos = 145
-      pdf.setFontSize(11)
-      pdf.setTextColor(37, 99, 235)
-      pdf.text('Meal Breakdown:', 25, mealYPos)
-      mealYPos += 10
-      
-      pdf.setFontSize(9)
-      pdf.setTextColor(0, 0, 0)
+
       Object.entries(mealCounts).forEach(([meal, count]) => {
-        if (mealYPos < 90 + summaryHeight - 5) { // Ensure text stays within box
-          pdf.text(`• ${meal}: ${count} worker${count !== 1 ? 's' : ''}`, 30, mealYPos)
-          mealYPos += 10
-        }
+        pdf.text(`• ${meal}: ${count} worker${count !== 1 ? 's' : ''}`, 30, mealYPos)
+        mealYPos += 10
       })
+
       
       // Manual table creation - add more spacing
       let yPos = 90 + summaryHeight + 15
@@ -173,8 +170,8 @@ export function DailyReport() {
       pdf.text('Name', 40, yPos + 8)
       pdf.text('Job Title', 85, yPos + 8)
       pdf.text('Meal Selected', 120, yPos + 8)
-      pdf.text('Time', 155, yPos + 8)
-      pdf.text('Collected', 175, yPos + 8)
+      pdf.text('Collected', 160, yPos + 8)
+
       
       yPos += 12
       
@@ -182,35 +179,49 @@ export function DailyReport() {
       pdf.setTextColor(0, 0, 0)
       pdf.setFontSize(10)
       
-      selectedWorkers.forEach((worker, index) => {
+      // Render grouped rows by department
+      Object.entries(groupedByDepartment).forEach(([department, workersInDept]) => {
+      
+      // Department title row
+      pdf.setFontSize(12)
+      pdf.setTextColor(37, 99, 235) // Blue
+      pdf.text(department, 25, yPos + 10)
+      yPos += 14
+
+      pdf.setFontSize(10)
+      pdf.setTextColor(0, 0, 0)
+
+      workersInDept.forEach((worker, index) => {
         if (yPos > 270) {
           pdf.addPage()
           yPos = 20
         }
-        
-        // Alternate row colors
+
+        // Row background (alternating)
         if (index % 2 === 1) {
-          pdf.setFillColor(248, 250, 252) // Gray-50
+          pdf.setFillColor(248, 250, 252)
           pdf.rect(20, yPos, pageWidth - 40, 10, 'F')
         }
-        
+
         // Row border
-        pdf.setDrawColor(229, 231, 235) // Gray-200
+        pdf.setDrawColor(229, 231, 235)
         pdf.rect(20, yPos, pageWidth - 40, 10, 'S')
-        
-        // Cell content
-        pdf.text((index + 1).toString(), 25, yPos + 7)
+
+        // Row content
         pdf.text(worker.name.substring(0, 18), 40, yPos + 7)
-        pdf.text(worker.department.substring(0, 12), 85, yPos + 7)
         pdf.text(worker.mealName?.substring(0, 15) || '', 120, yPos + 7)
-        pdf.text(worker.selectionTime || '', 155, yPos + 7)
-        
-        // Checkbox for collection tracking
+
+        // Checkbox
         pdf.setDrawColor(0, 0, 0)
-        pdf.rect(178, yPos + 2, 6, 6, 'S')
-        
+        pdf.rect(165, yPos + 2, 6, 6, 'S')
+
         yPos += 10
       })
+
+      // Add spacing after each department
+      yPos += 8
+    })
+
       
       // Footer
       const finalY = yPos + 10
