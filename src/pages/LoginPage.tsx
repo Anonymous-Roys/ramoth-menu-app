@@ -109,18 +109,16 @@ export function LoginPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="forgot">Forgot ID</TabsTrigger>
-            </TabsList>
-            
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="userId">User ID</Label>
+                  <Label htmlFor="userId" className="text-center">User ID</Label>
                   <Input
                     id="userId"
                     placeholder="Enter your user ID (e.g., darhin4332)"
+                    onKeyDown={(e) => {
+                      if (e.key === " ") e.preventDefault();
+                    }}
                     value={loginData.userId}
                     onChange={(e) => setLoginData({ userId: e.target.value })}
                     required
