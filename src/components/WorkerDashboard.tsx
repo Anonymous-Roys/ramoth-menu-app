@@ -112,7 +112,7 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 8;
+    return hours < 23;
   };
 
   const todayMenu = getTodayMenu();
