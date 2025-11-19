@@ -37,7 +37,7 @@ export function WorkerDashboard({
   // Company location: 6.2025094, -1.7130153
   const COMPANY_LAT = 6.2025094;
   const COMPANY_LNG = -1.7130153;
-  const RADIUS_METERS = 1000;
+  const RADIUS_METERS = 2000;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -63,7 +63,7 @@ export function WorkerDashboard({
           setIsOnSite(distance <= RADIUS_METERS);
           
           if (distance > RADIUS_METERS) {
-            toast.error('You are not at the company location. For demo purposes, selection is still allowed.');
+            toast.error('You are not at the company location.');
           }
         },
         () => {
