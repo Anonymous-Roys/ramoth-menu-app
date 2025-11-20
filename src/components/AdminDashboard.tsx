@@ -219,9 +219,9 @@ export function AdminDashboard({
                     <Button onClick={() => setActiveView('menu')} className="bg-orange-600 hover:bg-orange-700">
                       ➕ Add Weekly Menu
                     </Button>
-                    <Button onClick={() => setActiveView('reports')} variant="outline">
+                    {/* <Button onClick={() => setActiveView('reports')} variant="outline">
                       📄 Daily Reports
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
 
