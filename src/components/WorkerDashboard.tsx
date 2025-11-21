@@ -60,10 +60,11 @@ export function WorkerDashboard({
             COMPANY_LNG
           );
           
-          //setIsOnSite(distance <= RADIUS_METERS);
+          setIsOnSite(distance <= RADIUS_METERS);
           
-          /* if (distance > RADIUS_METERS) {
-            toast.error('You are not at the company location. Meal selection not allowed');
+          if (distance > RADIUS_METERS) {
+            toast.error('Meal selection allowed');
+            //toast.error('You are not at the company location. Meal selection not allowed');
           } 
         },
         () => {
@@ -269,17 +270,15 @@ export function WorkerDashboard({
                 <div className={`p-3 rounded-xl ${isOnSite ? 'bg-green-100' : 'bg-red-100'}`}>
                   <MapPin className={`w-5 h-5 ${isOnSite ? 'text-green-600' : 'text-red-600'}`} />
                 </div>
-                {/* <div>
+                 <div>
                   <p className="text-sm text-gray-600">Location</p>
                   <p className={isOnSite ? 'text-green-600' : 'text-red-600'}>
                     {isOnSite ? 'On Site ✓' : 'Off Site'}
                   </p>
-                </div> }
+                </div> 
               </div>
             </CardContent>
-          </Card>*/
-
-
+          </Card>*/}
 
           <Card className={beforeDeadline ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}>
             <CardContent className="pt-6">
