@@ -112,7 +112,7 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 23; // Before 8:00 AM
+    return hours < 8; // Before 8:00 AM
   };
 
   const todayMenu = getTodayMenu();
@@ -274,10 +274,10 @@ export function WorkerDashboard({
                   <p className={isOnSite ? 'text-green-600' : 'text-red-600'}>
                     {isOnSite ? 'On Site ✓' : 'Off Site'}
                   </p>
-                </div> */}
+                </div> }
               </div>
             </CardContent>
-          </Card>
+          </Card>*/
 
 
 
