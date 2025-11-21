@@ -65,6 +65,7 @@ export function WorkerDashboard({
           if (distance > RADIUS_METERS) {
             toast.error('Meal selection allowed');
             //toast.error('You are not at the company location. Meal selection not allowed');
+            //toast.error('You are not at the company location. Meal selection not allowed');
           } 
         },
         () => {
