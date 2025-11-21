@@ -72,7 +72,7 @@ export function WorkerDashboard({
           setIsOnSite(true);
           toast.info('GPS verification simulated for demo');
         }
-      );
+      );*/
     } else {
       setIsOnSite(true);
       toast.info('GPS verification simulated for demo');
