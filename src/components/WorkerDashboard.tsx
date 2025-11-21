@@ -65,6 +65,8 @@ export function WorkerDashboard({
           if (distance > RADIUS_METERS) {
             toast.error('Meal selection allowed');
             //toast.error('You are not at the company location. Meal selection not allowed');
+            //toast.error('You are not at the company location. Meal selection not allowed');
+            //toast.error('You are not at the company location. Meal selection not allowed');
           } 
         },
         () => {
@@ -72,7 +74,7 @@ export function WorkerDashboard({
           setIsOnSite(true);
           toast.info('GPS verification simulated for demo');
         }
-      );*/
+      );
     } else {
       setIsOnSite(true);
       toast.info('GPS verification simulated for demo');
