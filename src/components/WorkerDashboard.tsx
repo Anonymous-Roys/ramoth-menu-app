@@ -60,11 +60,12 @@ export function WorkerDashboard({
             COMPANY_LNG
           );
           
-          //setIsOnSite(distance <= RADIUS_METERS);
+          setIsOnSite(distance <= RADIUS_METERS);
           
-          /* if (distance > RADIUS_METERS) {
-            toast.error('You are not at the company location. Meal selection not allowed');
-          } */
+          if (distance > RADIUS_METERS) {
+            toast.error('Meal selection allowed');
+            //toast.error('You are not at the company location. Meal selection not allowed');
+          } 
         },
         () => {
           // For demo, allow access even if GPS fails
@@ -112,7 +113,7 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 23; // Before 8:00 AM
+    return hours < 8; // Before 8:00 AM
   };
 
   const todayMenu = getTodayMenu();
@@ -269,15 +270,15 @@ export function WorkerDashboard({
                 <div className={`p-3 rounded-xl ${isOnSite ? 'bg-green-100' : 'bg-red-100'}`}>
                   <MapPin className={`w-5 h-5 ${isOnSite ? 'text-green-600' : 'text-red-600'}`} />
                 </div>
-                {/* <div>
+                 <div>
                   <p className="text-sm text-gray-600">Location</p>
                   <p className={isOnSite ? 'text-green-600' : 'text-red-600'}>
                     {isOnSite ? 'On Site ✓' : 'Off Site'}
                   </p>
-                </div> */}
+                </div> 
               </div>
             </CardContent>
-          </Card>
+          </Card>*/}
 
           <Card className={beforeDeadline ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}>
             <CardContent className="pt-6">
