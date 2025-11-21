@@ -262,8 +262,8 @@ export function WorkerDashboard({
         </Card>
 
         {/* Status Cards */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className={isOnSite ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* <Card className={isOnSite ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className={`p-3 rounded-xl ${isOnSite ? 'bg-green-100' : 'bg-red-100'}`}>
@@ -338,7 +338,7 @@ export function WorkerDashboard({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              🍛 Today's Meals
+              🍛Today's Meals
             </CardTitle>
             <CardDescription>
               {alreadySelected ? 'Click to update your selection (before 8:00 AM)' : 'Select your preferred meal'}
