@@ -29,7 +29,7 @@ export function WorkerDashboard({
   onMealSelection,
   onMealDeselection // ✅ include this prop
 }: WorkerDashboardProps) {
-  const [isOnSite, setIsOnSite] = useState(false);
+  const [isOnSite, setIsOnSite] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [showWeeklyMenu, setShowWeeklyMenu] = useState(false);
@@ -60,11 +60,11 @@ export function WorkerDashboard({
             COMPANY_LNG
           );
           
-          setIsOnSite(distance <= RADIUS_METERS);
+          //setIsOnSite(distance <= RADIUS_METERS);
           
-          if (distance > RADIUS_METERS) {
-            toast.error('You are not at the company location. For demo purposes, selection is still allowed.');
-          }
+          /* if (distance > RADIUS_METERS) {
+            toast.error('You are not at the company location. Meal selection not allowed');
+          } */
         },
         () => {
           // For demo, allow access even if GPS fails
