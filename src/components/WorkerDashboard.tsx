@@ -279,8 +279,6 @@ export function WorkerDashboard({
             </CardContent>
           </Card> */}
 
-
-
           <Card className={beforeDeadline ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
