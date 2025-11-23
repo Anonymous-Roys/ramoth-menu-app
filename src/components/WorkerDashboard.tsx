@@ -29,7 +29,7 @@ export function WorkerDashboard({
   onMealSelection,
   onMealDeselection // ✅ include this prop
 }: WorkerDashboardProps) {
-  const [isOnSite, setIsOnSite] = useState(true);
+  const [isOnSite, setIsOnSite] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [showWeeklyMenu, setShowWeeklyMenu] = useState(false);
@@ -37,7 +37,7 @@ export function WorkerDashboard({
   // Company location: 6.2025094, -1.7130153
   const COMPANY_LAT = 6.2025094;
   const COMPANY_LNG = -1.7130153;
-  const RADIUS_METERS = 2000;
+  const RADIUS_METERS = 5000;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -63,11 +63,8 @@ export function WorkerDashboard({
           setIsOnSite(distance <= RADIUS_METERS);
           
           if (distance > RADIUS_METERS) {
-            toast.error('Meal selection allowed');
-            //toast.error('You are not at the company location. Meal selection not allowed');
-            //toast.error('You are not at the company location. Meal selection not allowed');
-            //toast.error('You are not at the company location. Meal selection not allowed');
-          } 
+            toast.error('You are not at the company location. For demo purposes, selection is still allowed.');
+          }
         },
         () => {
           // For demo, allow access even if GPS fails
@@ -115,7 +112,7 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 8; // Before 8:00 AM
+    return hours < 8;
   };
 
   const todayMenu = getTodayMenu();
@@ -266,21 +263,23 @@ export function WorkerDashboard({
 
         {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* <Card className={isOnSite ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+          <Card className={isOnSite ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className={`p-3 rounded-xl ${isOnSite ? 'bg-green-100' : 'bg-red-100'}`}>
                   <MapPin className={`w-5 h-5 ${isOnSite ? 'text-green-600' : 'text-red-600'}`} />
                 </div>
-                 <div>
+                <div>
                   <p className="text-sm text-gray-600">Location</p>
                   <p className={isOnSite ? 'text-green-600' : 'text-red-600'}>
                     {isOnSite ? 'On Site ✓' : 'Off Site'}
                   </p>
-                </div> 
+                </div>
               </div>
             </CardContent>
-          </Card>*/}
+          </Card>
+
+
 
           <Card className={beforeDeadline ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}>
             <CardContent className="pt-6">
@@ -339,7 +338,7 @@ export function WorkerDashboard({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              🍛Today's Meals
+              🍛 Today's Meals
             </CardTitle>
             <CardDescription>
               {alreadySelected ? 'Click to update your selection (before 8:00 AM)' : 'Select your preferred meal'}
