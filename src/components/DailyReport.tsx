@@ -134,7 +134,7 @@ export function DailyReport() {
       
       // Summary box height based on number of meals
       const mealBreakdownLines = Object.keys(mealCounts).length
-      const summaryHeight = 18 + (mealBreakdownLines)
+      const summaryHeight = 25 + (mealBreakdownLines)
 
       pdf.setFillColor(239, 246, 255)
       pdf.rect(15, 40, pageWidth - 40, summaryHeight, 'F')
@@ -188,7 +188,7 @@ export function DailyReport() {
       pdf.text(department, 25, yPos + 10)
       yPos += 15
 
-      pdf.setFontSize(8)
+      pdf.setFontSize(10)
       pdf.setTextColor(0, 0, 0)
 
 // Render workers in rows of 3
@@ -200,12 +200,12 @@ for (let i = 0; i < workersInDept.length; i += 3) {
 
   const w1 = workersInDept[i]
   const w2 = workersInDept[i + 1]
-  const w3 = workersInDept[i + 2]
+  //const w3 = workersInDept[i + 2]
 
   // Column positions
   const col1X = 25
-  const col2X = 80
-  const col3X = 135
+  const col2X = 120
+  //const col3X = 135
 
   // Row background
   pdf.setFillColor(250, 250, 250)
@@ -214,27 +214,27 @@ for (let i = 0; i < workersInDept.length; i += 3) {
   // Draw vertical lines for column separation
   pdf.setDrawColor(200) // light gray
   pdf.line(col2X - 5, yPos, col2X - 5, yPos + 6)
-  pdf.line(col3X - 5, yPos, col3X - 5, yPos + 6)
+  //pdf.line(col3X - 5, yPos, col3X - 5, yPos + 6)
   
 
   // Worker 1
   if (w1) {
     pdf.text(w1.name.substring(0, 18), col1X, yPos + 2)
-    pdf.text(w1.mealName?.substring(0, 15) || '', col1X + 35, yPos + 2)
+    pdf.text(w1.mealName?.substring(0, 15) || '', col1X + 45, yPos + 2)
     //pdf.rect(20, yPos, pageWidth - 40, 12, 'S')
   }
 
   // Worker 2
   if (w2) {
     pdf.text(w2.name.substring(0, 18), col2X, yPos + 2)
-    pdf.text(w2.mealName?.substring(0, 15) || '', col2X + 35, yPos + 2)
+    pdf.text(w2.mealName?.substring(0, 15) || '', col2X + 45, yPos + 2)
   }
 
   // Worker 3
-  if (w3) {
+  /* if (w3) {
     pdf.text(w3.name.substring(0, 18), col3X, yPos + 2)
     pdf.text(w3.mealName?.substring(0, 15) || '', col3X + 35, yPos + 2)
-  }
+  } */
 
   yPos += 5
 }

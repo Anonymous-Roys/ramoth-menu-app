@@ -112,7 +112,7 @@ export function LoginPage() {
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="userId" className="text-center">User ID</Label>
+                  {/* <Label htmlFor="userId" className="text-center">User ID</Label> */}
                   <Input
                     id="userId"
                     placeholder="Enter your user ID (e.g., darhin4332)"

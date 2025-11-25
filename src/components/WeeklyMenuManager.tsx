@@ -192,14 +192,11 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>🗓️ Add Weekly Menu</CardTitle>
-              <CardDescription>
-                Create or modify meal options for the next 7 days
-              </CardDescription>
+          <div>
+            <div className='font-black text-xl py-4 my-4 text-center align-middle w-full'>
+              <strong>🗓️ Add Weekly Menu</strong>
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2 md:flex md:gap-4">
               <Button onClick={handleLoadTemplate} variant="outline" size="sm">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Load Template
