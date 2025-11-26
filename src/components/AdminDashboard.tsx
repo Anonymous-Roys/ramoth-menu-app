@@ -36,7 +36,7 @@ export function AdminDashboard({
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
+  /* const fetchDashboardData = async () => {
     try {
       // Fetch total workers
       const { data: workers, error: workersError } = await supabase
@@ -49,18 +49,14 @@ export function AdminDashboard({
 
       // Fetch recent selections with user data
       const { data: selectionsData, error: selectionsError } = await supabase
-        .from('selections')
-        .select(`
-          *,
-          users!inner(name, department)
-        `)
-        .order('created_at', { ascending: false })
-        .select(`
-  *,
-  users!inner(name, department)
-`)
-.eq('date', new Date().toISOString().split('T')[0]);
-;
+  .from('selections')
+  .select(`
+    *,
+    users!inner(name, department)
+  `)
+  .eq('date', new Date().toISOString().split('T')[0])
+  .order('created_at', { ascending: false });
+
 
       if (selectionsError) throw selectionsError;
 
@@ -78,7 +74,75 @@ export function AdminDashboard({
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
     }
-  };
+  }; */
+
+  const fetchDashboardData = async () => {
+  try {
+    // 1) compute local day range to avoid timezone/date mismatches
+    const now = new Date();
+    const localStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0); // today 00:00 local
+    const localTomorrow = new Date(localStart);
+    localTomorrow.setDate(localTomorrow.getDate() + 1);
+
+    // ISO strings in UTC representation (Postgres stores timestamps in UTC typically)
+    const fromIso = localStart.toISOString();
+    const toIso = localTomorrow.toISOString();
+
+    // 2) fetch selections for the day and join user info
+    const { data: selectionsData, error: selectionsError } = await supabase
+      .from('selections')
+      .select(`
+        *,
+        users!inner(name, department)
+      `)
+      .gte('created_at', fromIso)
+      .lt('created_at', toIso)
+      .order('created_at', { ascending: false });
+
+    if (selectionsError) throw selectionsError;
+
+    // 3) Deduplicate by user_id (keeps the most recent selection for that user)
+    const byUser = new Map<string, any>();
+    const duplicates: any[] = [];
+
+    (selectionsData || []).forEach((sel: any) => {
+      const uid = sel.user_id;
+      if (!byUser.has(uid)) {
+        byUser.set(uid, sel);
+      } else {
+        // existing — record as duplicate for debugging
+        duplicates.push({ existing: byUser.get(uid), duplicate: sel });
+        // Optionally replace with most recent if you prefer:
+        // if (new Date(sel.created_at) > new Date(byUser.get(uid).created_at)) byUser.set(uid, sel);
+      }
+    });
+
+    // 4) Log duplicates so you can inspect (open console to view)
+    if (duplicates.length > 0) {
+      console.warn('Duplicate selections found for same user today:', duplicates);
+    }
+
+    // 5) Format unique selections for UI
+    const formattedSelections: MealSelection[] = Array.from(byUser.values()).map(selection => ({
+      userId: selection.user_id,
+      userName: selection.users?.name ?? 'Unknown',
+      department: selection.users?.department ?? 'Unknown',
+      mealId: selection.meal_id,
+      mealName: selection.meal_name,
+      date: new Date(selection.created_at).toISOString().split('T')[0],
+      time: new Date(selection.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    }));
+
+    setRecentSelections(formattedSelections);
+    setTotalWorkers(prev => prev); // no change, just leaving this line in case you want to update other state
+
+    // Optional: set a diagnostic count you can render temporarily
+    console.info(`Raw rows fetched: ${selectionsData?.length ?? 0}, unique users: ${byUser.size}`);
+
+  } catch (error) {
+    console.error('Failed to fetch dashboard data:', error);
+  }
+};
 
   const getTodaySelections = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -113,10 +177,68 @@ export function AdminDashboard({
         <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
       )} */}
 
+
 {/* DESKTOP SIDEBAR */}
 <div className="hidden md:block w-64 bg-gradient-to-b from-blue-700 to-blue-900 text-white shadow-xl">
-  {/* your sidebar contents here */}
+  <div className="p-6">
+    <div className="flex items-center gap-3 mb-8">
+      <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
+        <UtensilsCrossed className="w-6 h-6" />
+      </div>
+      <div>
+        <h3 className="text-white">Ramoth Menu App</h3>
+        <p className="text-sm text-blue-200">Admin Panel</p>
+      </div>
+    </div>
+
+    <nav className="space-y-2">
+      {sidebarItems.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.id}
+            onClick={() => setActiveView(item.id as any)}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+              activeView === item.id
+                ? 'bg-white text-blue-700 shadow-lg'
+                : 'text-blue-100 hover:bg-white/10'
+            }`}
+          >
+            <Icon className="w-5 h-5" />
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  </div>
+
+  {/* USER SECTION */}
+  <div className="mt-auto p-6 border-t border-blue-600">
+    <div className="flex items-center gap-3 mb-4">
+      <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+        <Settings className="w-5 h-5" />
+      </div>
+      <div className="flex-1">
+        <p className="text-sm">{user.name}</p>
+        <p className="text-xs text-blue-200">{user.department}</p>
+      </div>
+    </div>
+
+    <Button
+      onClick={onLogout}
+      variant="outline"
+      className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+      size="sm"
+    >
+      <LogOut className="w-4 h-4 mr-2" />
+      Logout
+    </Button>
+  </div>
 </div>
+
+
+
+
 
 {/* MOBILE FULL-SCREEN DRAWER */}
 {mobileOpen && (
@@ -199,6 +321,7 @@ export function AdminDashboard({
     </div>
   </>
 )}
+
 
 
       {/* Main Content */}
