@@ -214,7 +214,7 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -288,7 +288,188 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
                 })}
               </TableBody>
             </Table>
+          </div> */}
+
+          <div className="w-full">
+  {/* Desktop Table */}
+  <div className="hidden md:block overflow-x-auto">
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-32">Day</TableHead>
+          <TableHead>Meals</TableHead>
+          <TableHead className="w-20">+Add</TableHead>
+        </TableRow>
+      </TableHeader>
+
+      <TableBody>
+        {dates.map((date) => {
+          const meals = weeklyInput[date];
+
+          return (
+            <TableRow key={date}>
+              <TableCell>
+                <div>
+                  <p>{getDayName(date)}</p>
+                  <p className="text-sm text-gray-500">{getFormattedDate(date)}</p>
+                </div>
+              </TableCell>
+
+              <TableCell>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {meals.map((meal, idx) => (
+                    <div
+                      key={idx}
+                      className="space-y-2 p-3 border rounded-lg relative bg-white"
+                    >
+                      <Input
+                        placeholder="Meal name"
+                        value={meal.name}
+                        onChange={(e) =>
+                          handleMealChange(date, idx, "name", e.target.value)
+                        }
+                        className="text-sm"
+                      />
+
+                      <Input
+                        placeholder="Description"
+                        value={meal.description}
+                        onChange={(e) =>
+                          handleMealChange(
+                            date,
+                            idx,
+                            "description",
+                            e.target.value
+                          )
+                        }
+                        className="text-sm"
+                      />
+
+                      {meals.length > 2 && (
+                        <Button
+                          onClick={() => handleRemoveMeal(date, idx)}
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-2 -right-2 h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </TableCell>
+
+              <TableCell>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={() => handleAddMealOption(date)}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+
+                  <Button
+                    onClick={() => handleDeleteMenu(date)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  </div>
+
+  {/* Mobile Cards */}
+  <div className="md:hidden space-y-4">
+    {dates.map((date) => {
+      const meals = weeklyInput[date];
+
+      return (
+        <div
+          key={date}
+          className="border rounded-lg p-4 bg-white shadow-sm"
+        >
+          {/* Day Header */}
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="font-medium">{getDayName(date)}</p>
+              <p className="text-sm text-gray-500">
+                {getFormattedDate(date)}
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={() => handleAddMealOption(date)}
+                variant="ghost"
+                size="sm"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+
+              <Button
+                onClick={() => handleDeleteMenu(date)}
+                variant="ghost"
+                size="sm"
+                className="text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
+
+          {/* Meal Inputs */}
+          <div className="space-y-4">
+            {meals.map((meal, idx) => (
+              <div
+                key={idx}
+                className="p-3 rounded-lg border bg-gray-50 relative"
+              >
+                <Input
+                  placeholder="Meal name"
+                  value={meal.name}
+                  onChange={(e) =>
+                    handleMealChange(date, idx, "name", e.target.value)
+                  }
+                  className="text-sm"
+                />
+
+                <Input
+                  placeholder="Description"
+                  value={meal.description}
+                  onChange={(e) =>
+                    handleMealChange(date, idx, "description", e.target.value)
+                  }
+                  className="text-sm mt-2"
+                />
+
+                {meals.length > 2 && (
+                  <Button
+                    onClick={() => handleRemoveMeal(date, idx)}
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+</div>
+
 
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <h4 className="mb-2">💡 Tips</h4>
