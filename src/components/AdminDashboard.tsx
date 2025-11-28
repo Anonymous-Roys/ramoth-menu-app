@@ -10,6 +10,7 @@ import { UserList } from './UserList';
 import { DailyReport } from './DailyReport';
 import type { User, DailyMenu, MealSelection } from '../App';
 
+
 interface AdminDashboardProps {
   user: User;
   weeklyMenus: DailyMenu[];
@@ -28,13 +29,14 @@ export function AdminDashboard({
   const [activeView, setActiveView] = useState<'dashboard' | 'menu' | 'reports' | 'users' | 'daily-report'>('dashboard');
   const [totalWorkers, setTotalWorkers] = useState(0);
   const [recentSelections, setRecentSelections] = useState<MealSelection[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  //const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
+  /* const fetchDashboardData = async () => {
     try {
       // Fetch total workers
       const { data: workers, error: workersError } = await supabase
@@ -47,13 +49,14 @@ export function AdminDashboard({
 
       // Fetch recent selections with user data
       const { data: selectionsData, error: selectionsError } = await supabase
-        .from('selections')
-        .select(`
-          *,
-          users!inner(name, department)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(10);
+  .from('selections')
+  .select(`
+    *,
+    users!inner(name, department)
+  `)
+  .eq('date', new Date().toISOString().split('T')[0])
+  .order('created_at', { ascending: false });
+
 
       if (selectionsError) throw selectionsError;
 
@@ -71,7 +74,75 @@ export function AdminDashboard({
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
     }
-  };
+  }; */
+
+  const fetchDashboardData = async () => {
+  try {
+    // 1) compute local day range to avoid timezone/date mismatches
+    const now = new Date();
+    const localStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0); // today 00:00 local
+    const localTomorrow = new Date(localStart);
+    localTomorrow.setDate(localTomorrow.getDate() + 1);
+
+    // ISO strings in UTC representation (Postgres stores timestamps in UTC typically)
+    const fromIso = localStart.toISOString();
+    const toIso = localTomorrow.toISOString();
+
+    // 2) fetch selections for the day and join user info
+    const { data: selectionsData, error: selectionsError } = await supabase
+      .from('selections')
+      .select(`
+        *,
+        users!inner(name, department)
+      `)
+      .gte('created_at', fromIso)
+      .lt('created_at', toIso)
+      .order('created_at', { ascending: false });
+
+    if (selectionsError) throw selectionsError;
+
+    // 3) Deduplicate by user_id (keeps the most recent selection for that user)
+    const byUser = new Map<string, any>();
+    const duplicates: any[] = [];
+
+    (selectionsData || []).forEach((sel: any) => {
+      const uid = sel.user_id;
+      if (!byUser.has(uid)) {
+        byUser.set(uid, sel);
+      } else {
+        // existing — record as duplicate for debugging
+        duplicates.push({ existing: byUser.get(uid), duplicate: sel });
+        // Optionally replace with most recent if you prefer:
+        // if (new Date(sel.created_at) > new Date(byUser.get(uid).created_at)) byUser.set(uid, sel);
+      }
+    });
+
+    // 4) Log duplicates so you can inspect (open console to view)
+    if (duplicates.length > 0) {
+      console.warn('Duplicate selections found for same user today:', duplicates);
+    }
+
+    // 5) Format unique selections for UI
+    const formattedSelections: MealSelection[] = Array.from(byUser.values()).map(selection => ({
+      userId: selection.user_id,
+      userName: selection.users?.name ?? 'Unknown',
+      department: selection.users?.department ?? 'Unknown',
+      mealId: selection.meal_id,
+      mealName: selection.meal_name,
+      date: new Date(selection.created_at).toISOString().split('T')[0],
+      time: new Date(selection.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    }));
+
+    setRecentSelections(formattedSelections);
+    setTotalWorkers(prev => prev); // no change, just leaving this line in case you want to update other state
+
+    // Optional: set a diagnostic count you can render temporarily
+    console.info(`Raw rows fetched: ${selectionsData?.length ?? 0}, unique users: ${byUser.size}`);
+
+  } catch (error) {
+    console.error('Failed to fetch dashboard data:', error);
+  }
+};
 
   const getTodaySelections = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -102,33 +173,109 @@ export function AdminDashboard({
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex">
       {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
+      {/* {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
+      )} */}
+
+
+{/* DESKTOP SIDEBAR */}
+<div className="hidden md:block w-64 bg-gradient-to-b from-blue-700 to-blue-900 text-white shadow-xl">
+  <div className="p-6">
+    <div className="flex items-center gap-3 mb-8">
+      <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
+        <UtensilsCrossed className="w-6 h-6" />
+      </div>
+      <div>
+        <h3 className="text-white">Ramoth Menu App</h3>
+        <p className="text-sm text-blue-200">Admin Panel</p>
+      </div>
+    </div>
+
+    <nav className="space-y-2">
+      {sidebarItems.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.id}
+            onClick={() => setActiveView(item.id as any)}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+              activeView === item.id
+                ? 'bg-white text-blue-700 shadow-lg'
+                : 'text-blue-100 hover:bg-white/10'
+            }`}
+          >
+            <Icon className="w-5 h-5" />
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  </div>
+
+  {/* USER SECTION */}
+  <div className="mt-auto p-6 border-t border-blue-600">
+    <div className="flex items-center gap-3 mb-4">
+      <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+        <Settings className="w-5 h-5" />
+      </div>
+      <div className="flex-1">
+        <p className="text-sm">{user.name}</p>
+        <p className="text-xs text-blue-200">{user.department}</p>
+      </div>
+    </div>
+
+    <Button
+      onClick={onLogout}
+      variant="outline"
+      className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+      size="sm"
+    >
+      <LogOut className="w-4 h-4 mr-2" />
+      Logout
+    </Button>
+  </div>
+</div>
+
+
+
+
+
+{/* MOBILE FULL-SCREEN DRAWER */}
+{mobileOpen && (
+  <>
+    {/* Overlay */}
+    <div
+      className="fixed inset-0 bg-black/60 z-40 md:hidden"
+      onClick={() => setMobileOpen(false)}
+    />
+
+    {/* Drawer */}
+    <div className="fixed inset-0 bg-gradient-to-b from-blue-700 to-blue-900 text-white shadow-xl p-6 overflow-y-auto md:hidden">
+      
+
+      {/* your sidebar items here */}
       
       {/* Sidebar */}
-      <div className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-blue-700 to-blue-900 text-white shadow-xl transform transition-transform duration-300 ease-in-out ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      <div className={`fixed md:static inset-y-0 left-0 z-50 w-64 text-white transform transition-transform duration-300 ease-in-out ${
+        mobileOpen ? 'translate-x-0' : '-translate-x-full'
       } md:translate-x-0 md:block`}>
         <div className="p-6">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-8 gap-2">
             <div className="flex items-center gap-3">
               <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
                 <UtensilsCrossed className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-white">RamothMenu App</h3>
+                <h3 className="text-white">Ramoth Menu App</h3>
                 <p className="text-sm text-blue-200">Admin Panel</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden text-white hover:bg-white/10"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="w-5 h-5" />
-            </Button>
+            <button
+          onClick={() => setMobileOpen(false)}
+          className="text-white text-2xl font-bold"
+        >
+          ✕
+        </button>
           </div>
 
           <nav className="space-y-2">
@@ -139,7 +286,7 @@ export function AdminDashboard({
                   key={item.id}
                   onClick={() => {
                     setActiveView(item.id as any);
-                    setSidebarOpen(false);
+                    setMobileOpen(false);
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     activeView === item.id
@@ -171,6 +318,11 @@ export function AdminDashboard({
           </Button>
         </div>
       </div>
+    </div>
+  </>
+)}
+
+
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
@@ -178,14 +330,13 @@ export function AdminDashboard({
         <div className="bg-white shadow-sm border-b md:hidden">
           <div className="px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarOpen(true)}
-                className="text-gray-600 hover:bg-gray-100"
+              {/* MOBILE MENU BUTTON */}
+              <button
+                onClick={() => setMobileOpen(true)}
+                className="md:hidden p-2 text-blue-700 text-2xl"
               >
-                <Menu className="w-5 h-5" />
-              </Button>
+                ☰
+              </button>
               <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-2 rounded-xl">
                 <UtensilsCrossed className="w-5 h-5 text-white" />
               </div>
@@ -210,24 +361,24 @@ export function AdminDashboard({
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h1>👨‍💼 Admin Dashboard</h1>
+                    <h1>Admin Dashboard</h1>
                     <p className="text-gray-600 mt-1">
                       {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={() => setActiveView('menu')} className="bg-orange-600 hover:bg-orange-700">
+                    {/* <Button onClick={() => setActiveView('menu')} className="bg-orange-600 hover:bg-orange-700">
                       ➕ Add Weekly Menu
-                    </Button>
-                    <Button onClick={() => setActiveView('reports')} variant="outline">
+                    </Button> */}
+                    {/* <Button onClick={() => setActiveView('reports')} variant="outline">
                       📄 Daily Reports
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
 
                 {/* Summary Cards */}
                 <div>
-                  <h3 className="mb-4">📊 Summary — Today</h3>
+                  <h3 className="mb-4">Summary — Today</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
                       <CardHeader>
@@ -257,11 +408,11 @@ export function AdminDashboard({
                         <p className="text-4xl">
                           {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                         </p>
-                        <p className="text-sm text-green-100 mt-1">Deadline: 9:00 AM</p>
+                        <p className="text-sm text-green-100 mt-1">Deadline: 8:00 AM</p>
                       </CardContent>
                     </Card>
 
-                    <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+                    {/* <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
                       <CardHeader>
                         <CardTitle className="text-white text-sm">Weekly Menus</CardTitle>
                       </CardHeader>
@@ -269,7 +420,7 @@ export function AdminDashboard({
                         <p className="text-4xl">{weeklyMenus.length}</p>
                         <p className="text-sm text-purple-100 mt-1">Configured menus</p>
                       </CardContent>
-                    </Card>
+                    </Card> */}
                   </div>
                 </div>
 

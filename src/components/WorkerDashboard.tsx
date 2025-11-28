@@ -3,12 +3,14 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { LogOut, MapPin, Clock, Check, AlertCircle, UtensilsCrossed, Calendar, User } from 'lucide-react';
 import { WeeklyMenuView } from './WeeklyMenuView';
 import { NotificationSystem } from './NotificationSystem';
 import type { User as UserType, DailyMenu, MealSelection } from '../App';
 import logo from '../logo.png';
+
+
 
 interface WorkerDashboardProps {
   user: UserType;
@@ -24,7 +26,8 @@ export function WorkerDashboard({
   weeklyMenus, 
   selections, 
   onLogout, 
-  onMealSelection 
+  onMealSelection,
+  onMealDeselection // ✅ include this prop
 }: WorkerDashboardProps) {
   const [isOnSite, setIsOnSite] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -34,7 +37,7 @@ export function WorkerDashboard({
   // Company location: 6.2025094, -1.7130153
   const COMPANY_LAT = 6.2025094;
   const COMPANY_LNG = -1.7130153;
-  const RADIUS_METERS = 10000;
+  const RADIUS_METERS = 3000; // Distance radius in meters
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -60,7 +63,7 @@ export function WorkerDashboard({
           setIsOnSite(distance <= RADIUS_METERS);
           
           if (distance > RADIUS_METERS) {
-            toast.error('You are not at the company location. For demo purposes, selection is still allowed.');
+            toast.error('You are not at the company location. Meal selection is disabled.');
           }
         },
         () => {
@@ -109,21 +112,21 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 12;
+    return hours < 8;
   };
+
+  const todayMenu = getTodayMenu();
+  const alreadySelected = hasSelectedToday();
+  const todaySelection = getTodaySelection();
+  const beforeDeadline = isBeforeDeadline();
+  const canSelect = isOnSite && beforeDeadline;
 
   const handleMealSelect = (mealId: string, mealName: string) => {
     if (!isBeforeDeadline()) {
-      toast.error('Selection deadline has passed (12:00 PM)');
+      toast.error('Selection deadline has passed (8:00 AM)');
       return;
     }
 
-    const isUpdate = alreadySelected;
-    const message = isUpdate 
-      ? `Are you sure you want to update your selection to ${mealName}?`
-      : `Are you sure you want to select ${mealName}?`;
-
-    if (window.confirm(message)) {
       const selection: MealSelection = {
         userId: user.id,
         userName: user.name,
@@ -136,25 +139,27 @@ export function WorkerDashboard({
 
       onMealSelection(selection);
       setSelectedMeal(mealId);
-      toast.success(isUpdate ? `Selection updated to ${mealName}!` : `${mealName} selected successfully!`);
-    }
+      toast.success(`${mealName} selected successfully!`);
   };
 
-  const handleMealDeselect = () => {
-    if (!isBeforeDeadline()) {
-      toast.error('Selection deadline has passed (12:00 PM)');
-      return;
-    }
+  const handleMealDeselect = (e: React.MouseEvent) => {
+  e.stopPropagation(); // ✅ prevents double firing due to event bubbling
 
-    if (window.confirm('Are you sure you want to remove your meal selection?')) {
-      const today = new Date().toISOString().split('T')[0];
-      if (onMealDeselection) {
-        onMealDeselection(user.id, today);
-      }
+  if (!isBeforeDeadline()) {
+    toast.error('Selection deadline has passed (8:00 AM)');
+    return;
+  }
+    const today = new Date().toISOString().split('T')[0];
+    if (onMealDeselection) {
+      onMealDeselection(user.id, today);
       setSelectedMeal(null);
       toast.success('Meal selection removed successfully!');
+    } else {
+      toast.error('Meal deselection function not available.');
     }
-  };
+};
+
+
 
   if (showWeeklyMenu) {
     return (
@@ -190,11 +195,7 @@ export function WorkerDashboard({
     );
   }
 
-  const todayMenu = getTodayMenu();
-  const alreadySelected = hasSelectedToday();
-  const todaySelection = getTodaySelection();
-  const beforeDeadline = isBeforeDeadline();
-  const canSelect = isOnSite && beforeDeadline;
+  
   // const canSelect = true;
 
   return (
@@ -289,7 +290,7 @@ export function WorkerDashboard({
                 <div>
                   <p className="text-sm text-gray-600">Deadline Status</p>
                   <p className={beforeDeadline ? 'text-blue-600' : 'text-gray-600'}>
-                    {beforeDeadline ? 'Before 12:00 PM ✓' : 'After 12:00 PM'}
+                    {beforeDeadline ? 'Before 8:00 AM ✓' : 'After 8:00 AM'}
                   </p>
                 </div>
               </div>
@@ -319,7 +320,7 @@ export function WorkerDashboard({
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              ⏰ Selection deadline has passed. Selections close at 12:00 PM daily.
+              ⏰ Selection deadline has passed. Selections close at 8:00 AM daily.
             </AlertDescription>
           </Alert>
         )}
@@ -328,7 +329,7 @@ export function WorkerDashboard({
           <Alert className="border-green-200 bg-green-50">
             <Check className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
-              ✅ You selected <strong>{todaySelection.mealName}</strong>. Thank you!
+              You selected <strong>{todaySelection.mealName}</strong>Thank you!
             </AlertDescription>
           </Alert>
         )}
@@ -340,7 +341,7 @@ export function WorkerDashboard({
               🍛 Today's Meals
             </CardTitle>
             <CardDescription>
-              {alreadySelected ? 'Click to update your selection (before 12:00 PM)' : 'Select your preferred meal'}
+              {alreadySelected ? 'Click to update your selection (before 8:00 AM)' : 'Select your preferred meal'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -389,14 +390,11 @@ export function WorkerDashboard({
                           )}
                           {canSelect && isSelected && (
                             <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleMealDeselect();
-                              }}
+                              onClick={handleMealDeselect}
                               variant="outline"
                               className="w-full border-red-300 text-red-600 hover:bg-red-50"
                             >
-                              Deselect
+                              Cancel
                             </Button>
                           )}
                         </div>
@@ -421,7 +419,7 @@ export function WorkerDashboard({
                   <h4 className="mb-2">Selection Requirements</h4>
                   <ul className="text-sm text-gray-700 space-y-1">
                     <li>🔒 You must be on-site to select</li>
-                    <li>🕒 Selection closes at 12:00 PM</li>
+                    <li>🕒 Selection closes at 8:00 AM</li>
                   </ul>
                 </div>
               </div>
