@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from './ui/button'
-import { LogOut, UtensilsCrossed, LayoutDashboard, Calendar, FileText, Settings, Menu, X } from 'lucide-react'
+import { LogOut, UtensilsCrossed, LayoutDashboard, Calendar, FileText, Settings, Menu, X, UserCheck } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { User } from '../App'
 import logo from '../logo.png'
@@ -19,8 +19,8 @@ export function ResponsiveSidebar({ user, onLogout }: ResponsiveSidebarProps) {
     { label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
     { label: 'Add Menu', icon: Calendar, path: '/admin/addmenu' },
     { label: 'Users', icon: Settings, path: '/admin/users' },
+    { label: 'Distributors', icon: UserCheck, path: '/admin/distributors' },
     { label: 'Daily Report', icon: FileText, path: '/admin/dailyreport' },
-
   ]
 
   const handleNavigation = (path: string) => {

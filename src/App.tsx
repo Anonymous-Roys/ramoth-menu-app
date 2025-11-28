@@ -3,11 +3,12 @@ import { OnboardingPage } from './pages/OnboardingPage'
 import { LoginPage } from './pages/LoginPage'
 import { MenuPage } from './pages/MenuPage'
 import { AdminPage } from './pages/AdminPage'
+import { DistributorPage } from './pages/DistributorPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
 import { Toaster } from './components/ui/sonner'
 
-export type UserRole = 'worker' | 'admin' | null
+export type UserRole = 'worker' | 'admin' | 'distributor' | null
 
 export interface User {
   id: string
@@ -41,6 +42,7 @@ export interface MealSelection {
   mealName: string
   date: string
   time: string
+  collected?: boolean
 }
 
 function AppRoutes() {
@@ -53,7 +55,11 @@ function AppRoutes() {
         path="/" 
         element={
           currentUser ? (
-            <Navigate to={JSON.parse(currentUser).role === 'admin' ? '/admin' : '/menu'} replace />
+            <Navigate to={
+              JSON.parse(currentUser).role === 'admin' ? '/admin' : 
+              JSON.parse(currentUser).role === 'distributor' ? '/distributor' : 
+              '/menu'
+            } replace />
           ) : hasSeenOnboarding ? (
             <Navigate to="/login" replace />
           ) : (
@@ -76,6 +82,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="admin">
             <AdminPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/distributor" 
+        element={
+          <ProtectedRoute requiredRole="distributor">
+            <DistributorPage />
           </ProtectedRoute>
         } 
       />

@@ -1,42 +1,37 @@
-import { useAuth } from '../contexts/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import { ResponsiveSidebar } from './ResponsiveSidebar'
+import { User } from '../App'
 
 interface AdminLayoutProps {
   children: React.ReactNode
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const { user, signOut } = useAuth()
-
-  // Transform Supabase User to our App User type
-  const appUser = user ? {
-    id: user.id,
-    generated_id: user.user_metadata?.generated_id || '',
-    first_name: user.user_metadata?.first_name || '',
-    last_name: user.user_metadata?.last_name || '',
-    name: user.user_metadata?.name || user.email?.split('@')[0] || 'Admin',
-    email: user.email,
-    date_of_birth: user.user_metadata?.date_of_birth,
-    department: user.user_metadata?.department || 'Administration',
-    role: 'admin' as const,
-    unique_number: user.user_metadata?.unique_number || 0
-  } : null
-
-  if (!appUser) {
+  const navigate = useNavigate()
+  
+  // Get user from localStorage
+  const userData = localStorage.getItem('currentUser')
+  
+  if (!userData) {
+    navigate('/login')
+    return null
+  }
+  
+  const user: User = JSON.parse(userData)
+  
+  if (user.role !== 'admin') {
+    navigate('/login')
     return null
   }
 
-  const handleLogout = async () => {
-    try {
-      await signOut()
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser')
+    navigate('/login')
   }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <ResponsiveSidebar user={appUser} onLogout={handleLogout} />
+      <ResponsiveSidebar user={user} onLogout={handleLogout} />
       
       {/* Main Content */}
       <main className="flex-1 md:ml-0 min-h-screen">

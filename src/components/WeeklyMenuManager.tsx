@@ -29,7 +29,7 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
       date.setDate(today.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];
       
-      const existingMenu = weeklyMenus.find(m => m.date === dateStr);
+      const existingMenu = weeklyMenus?.find(m => m.date === dateStr);
       initialData[dateStr] = existingMenu?.meals || [
         { id: '1', name: '', description: '' },
         { id: '2', name: '', description: '' },
@@ -121,7 +121,7 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
 
       if (error) throw error;
 
-      onUpdateMenus([...weeklyMenus.filter(m => !dates.includes(m.date)), ...newMenus]);
+      onUpdateMenus([...(weeklyMenus || []).filter(m => !dates.includes(m.date)), ...newMenus]);
       toast.success('Weekly menu saved successfully');
     } catch (error) {
       toast.error('Failed to save menu');
@@ -171,7 +171,7 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
         ]
       }));
 
-      onUpdateMenus(weeklyMenus.filter(m => m.date !== date));
+      onUpdateMenus((weeklyMenus || []).filter(m => m.date !== date));
       toast.success('Menu deleted successfully');
     } catch (error) {
       toast.error('Failed to delete menu');
@@ -329,7 +329,7 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
               </div>
               <div>
                 <p className="text-sm text-gray-600">Current Menus</p>
-                <p>{weeklyMenus.length} Configured</p>
+                <p>{weeklyMenus?.length || 0} Configured</p>
               </div>
             </div>
           </CardContent>
