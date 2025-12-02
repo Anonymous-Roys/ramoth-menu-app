@@ -31,21 +31,27 @@ export function DailyReport() {
   const fetchDailyReport = async () => {
     setIsLoading(true)
     try {
-      // Get all workers
+      // Get all workers (exclude admin and distributor roles)
       const { data: allUsers, error: usersError } = await supabase
         .from('users')
         .select('id, name, department, role')
-        .eq('role', 'worker')
+        .not('role', 'in', '("admin","distributor")')
 
       if (usersError) throw usersError
 
-      // Get selections for the selected date
+      console.log('All users found:', allUsers?.length)
+      console.log('Users data:', allUsers)
+
+      // Get selections for the selected date with user info to verify data integrity
       const { data: selections, error: selectionsError } = await supabase
         .from('selections')
-        .select('user_id, meal_name, created_at')
+        .select('user_id, meal_name, created_at, users!inner(name, department)')
         .eq('date', selectedDate)
 
       if (selectionsError) throw selectionsError
+
+      console.log('Selections found:', selections?.length)
+      console.log('Selections data:', selections)
 
       // Combine data
       const report: WorkerReport[] = allUsers.map(user => {

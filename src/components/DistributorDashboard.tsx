@@ -3,7 +3,7 @@ import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Badge } from './ui/badge'
 import { toast } from 'sonner@2.0.3'
-import { LogOut, Check, Package, Users, Clock } from 'lucide-react'
+import { LogOut, Check, Package, Users, Clock, Search } from 'lucide-react'
 import type { User as UserType, MealSelection } from '../App'
 import logo from '../logo.png'
 
@@ -24,6 +24,7 @@ export function DistributorDashboard({
 }: DistributorDashboardProps) {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [foodReady, setFoodReady] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -44,7 +45,13 @@ export function DistributorDashboard({
     toast.success('Food status updated - Ready for collection!')
   }
 
-  const mealGroups = selections.reduce((acc, selection) => {
+  const filteredSelections = selections.filter(selection =>
+    selection.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    selection.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    selection.mealName.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const mealGroups = filteredSelections.reduce((acc, selection) => {
     if (!acc[selection.mealName]) {
       acc[selection.mealName] = []
     }
@@ -52,8 +59,8 @@ export function DistributorDashboard({
     return acc
   }, {} as Record<string, MealSelection[]>)
 
-  const totalSelections = selections.length
-  const collectedCount = selections.filter(s => s.collected).length
+  const totalSelections = filteredSelections.length
+  const collectedCount = filteredSelections.filter(s => s.collected).length
   const pendingCount = totalSelections - collectedCount
 
   return (
@@ -79,19 +86,19 @@ export function DistributorDashboard({
 
       <div className="max-w-6xl mx-auto p-4 space-y-6">
         {/* Welcome Banner */}
-        <Card className="bg-gradient-to-r from-green-600 to-green-700 text-white border-0">
+        <Card className="bg-gradient-to-r from-green-600 to-green-700 border-0">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-white mb-1">
+                <h3 className="text-black font-bold text-lg mb-1 drop-shadow-sm">
                   {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </h3>
-                <p className="text-green-100">Hello, {user.name} 👋</p>
+                <p className="text-black font-medium drop-shadow-sm">Hello, {user.name} 👋</p>
               </div>
               <div className="text-right">
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-                  <p className="text-sm text-green-100">Current Time</p>
-                  <p className="text-xl">
+                <div className="bg-white/30 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
+                  <p className="text-sm text-black font-medium drop-shadow-sm">Current Time</p>
+                  <p className="text-xl text-black font-bold drop-shadow-sm">
                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -100,8 +107,24 @@ export function DistributorDashboard({
           </CardContent>
         </Card>
 
+        {/* Search Bar */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Search by name, department, or meal..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-2 md:gap-4">
           <Card className="border-blue-200 bg-blue-50">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
