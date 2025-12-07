@@ -47,7 +47,16 @@ export function AdminAddMenuPage() {
 
   return (
     <div className="space-y-6">
-      <h1>🗓️ Add Weekly Menu</h1>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+            🗓️ Add Weekly Menu
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage weekly meal options for workers
+          </p>
+        </div>
+      </div>
       <WeeklyMenuManager
         weeklyMenus={weeklyMenus}
         onUpdateMenus={handleUpdateMenus}

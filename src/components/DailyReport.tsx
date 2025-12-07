@@ -3,25 +3,21 @@ import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Badge } from './ui/badge'
 import { Input } from './ui/input'
-import { supabase } from '../lib/supabase'
 import { toast } from 'sonner'
 import { Download, Users, CheckCircle, XCircle, Search, Calendar } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import jsPDF from 'jspdf'
+import { DataService, WorkerReport } from '../lib/dataService'
+import { useGlobalState } from '../lib/globalState'
 import logo from '../logo.png'
 
-interface WorkerReport {
-  id: string
-  name: string
-  department: string
-  hasSelected: boolean
-  mealName?: string
-  selectionTime?: string
-}
-
 export function DailyReport() {
-  const [workers, setWorkers] = useState<WorkerReport[]>([])
+  const { dashboardStats, refreshData } = useGlobalState()
+  const [allWorkers, setAllWorkers] = useState<WorkerReport[]>([])
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectionFilter, setSelectionFilter] = useState<string>('all')
+  const [departmentFilter, setDepartmentFilter] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -31,45 +27,9 @@ export function DailyReport() {
   const fetchDailyReport = async () => {
     setIsLoading(true)
     try {
-      // Get all workers (exclude admin and distributor roles)
-      const { data: allUsers, error: usersError } = await supabase
-        .from('users')
-        .select('id, name, department, role')
-        .not('role', 'in', '("admin","distributor")')
-
-      if (usersError) throw usersError
-
-      console.log('All users found:', allUsers?.length)
-      console.log('Users data:', allUsers)
-
-      // Get selections for the selected date with user info to verify data integrity
-      const { data: selections, error: selectionsError } = await supabase
-        .from('selections')
-        .select('user_id, meal_name, created_at, users!inner(name, department)')
-        .eq('date', selectedDate)
-
-      if (selectionsError) throw selectionsError
-
-      console.log('Selections found:', selections?.length)
-      console.log('Selections data:', selections)
-
-      // Combine data
-      const report: WorkerReport[] = allUsers.map(user => {
-        const selection = selections?.find(s => s.user_id === user.id)
-        return {
-          id: user.id,
-          name: user.name,
-          department: user.department,
-          hasSelected: !!selection,
-          mealName: selection?.meal_name,
-          selectionTime: selection ? new Date(selection.created_at).toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          }) : undefined
-        }
-      })
-
-      setWorkers(report)
+      const report = await DataService.fetchDailyReport(selectedDate)
+      setAllWorkers(report)
+      await refreshData(selectedDate)
     } catch (error) {
       toast.error('Failed to fetch daily report')
       console.error(error)
@@ -78,15 +38,26 @@ export function DailyReport() {
     }
   }
 
-  const filteredWorkers = workers.filter(worker =>
-    worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    worker.department.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredWorkers = allWorkers.filter(worker => {
+    const matchesSearch = worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      worker.department.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesSelection = selectionFilter === 'all' ||
+      (selectionFilter === 'selected' && worker.hasSelected) ||
+      (selectionFilter === 'not-selected' && !worker.hasSelected)
+    
+    const matchesDepartment = departmentFilter.length === 0 ||
+      departmentFilter.includes(worker.department)
+    
+    return matchesSearch && matchesSelection && matchesDepartment
+  })
+  
+  const uniqueDepartments = [...new Set(allWorkers.map(w => w.department))].sort()
 
   const stats = {
-    total: workers.length,
-    selected: workers.filter(w => w.hasSelected).length,
-    notSelected: workers.filter(w => !w.hasSelected).length
+    total: dashboardStats.totalWorkers,
+    selected: dashboardStats.todaySelections,
+    notSelected: dashboardStats.totalWorkers - dashboardStats.todaySelections
   }
 
   const generatePDF = () => {
@@ -124,7 +95,7 @@ export function DailyReport() {
       pdf.text(`Generated: ${new Date().toLocaleString()}`, 120, 35)
       
       // Calculate meal breakdown
-      const selectedWorkers = workers.filter(w => w.hasSelected)
+      const selectedWorkers = allWorkers.filter(w => w.hasSelected)
       // Group workers by department
       const groupedByDepartment = selectedWorkers.reduce((groups, worker) => {
         if (!groups[worker.department]) groups[worker.department] = []
@@ -273,26 +244,72 @@ for (let i = 0; i < workersInDept.length; i += 3) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label className="text-sm font-medium">Select Date</label>
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="text-sm font-medium">Search Workers</label>
-              <div className="relative mt-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <label className="text-sm font-medium">Select Date</label>
                 <Input
-                  placeholder="Search by name or department..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="mt-1"
                 />
+              </div>
+              <div className="flex-1">
+                <label className="text-sm font-medium">Search Workers</label>
+                <div className="relative mt-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search by name or department..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex gap-2">
+                {['all', 'selected', 'not-selected'].map((filter) => (
+                  <Button
+                    key={filter}
+                    variant={selectionFilter === filter ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectionFilter(filter)}
+                    className={`text-xs ${selectionFilter === filter ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                  >
+                    {filter === 'all' ? 'All' : filter === 'selected' ? 'Selected' : 'Not Selected'}
+                  </Button>
+                ))}
+              </div>
+              
+              <div className="flex-1">
+                <Select
+                  value={departmentFilter.length === 0 ? 'all' : departmentFilter.join(',')}
+                  onValueChange={(value) => {
+                    if (value === 'all') {
+                      setDepartmentFilter([])
+                    } else {
+                      const dept = value
+                      setDepartmentFilter(prev => 
+                        prev.includes(dept) 
+                          ? prev.filter(d => d !== dept)
+                          : [...prev, dept]
+                      )
+                    }
+                  }}
+                >
+                  <SelectTrigger className="text-xs">
+                    <SelectValue placeholder="Filter by department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Departments</SelectItem>
+                    {uniqueDepartments.map(dept => (
+                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -305,7 +322,7 @@ for (let i = 0; i < workersInDept.length; i += 3) {
       </Card>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -364,26 +381,22 @@ for (let i = 0; i < workersInDept.length; i += 3) {
           {isLoading ? (
             <div className="text-center py-8">Loading report...</div>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {filteredWorkers.map((worker) => (
-                <div key={worker.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
+                <div key={worker.id} className="p-3 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
                     <div className={`w-3 h-3 rounded-full ${worker.hasSelected ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <p className="font-medium text-sm">{worker.name}</p>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-2" title={worker.department}>{worker.department}</p>
+                  {worker.hasSelected ? (
                     <div>
-                      <p className="font-medium">{worker.name}</p>
-                      <p className="text-sm text-gray-600">{worker.department}</p>
+                      <Badge className="bg-green-600 text-xs">{worker.mealName}</Badge>
+                      <p className="text-xs text-gray-500 mt-1">at {worker.selectionTime}</p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    {worker.hasSelected ? (
-                      <div>
-                        <Badge className="bg-green-600 mb-1">{worker.mealName}</Badge>
-                        <p className="text-xs text-gray-500">at {worker.selectionTime}</p>
-                      </div>
-                    ) : (
-                      <Badge variant="secondary">No Selection</Badge>
-                    )}
-                  </div>
+                  ) : (
+                    <Badge variant="secondary" className="text-xs">No Selection</Badge>
+                  )}
                 </div>
               ))}
               

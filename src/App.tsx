@@ -2,12 +2,22 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { OnboardingPage } from './pages/OnboardingPage'
 import { LoginPage } from './pages/LoginPage'
 import { MenuPage } from './pages/MenuPage'
-import { AdminPage } from './pages/AdminPage'
+import { 
+  AdminPage, 
+  AdminDashboardPage, 
+  AdminAddMenuPage, 
+  AdminUsersPage, 
+  AdminDistributorsPage, 
+  AdminDailyReportPage 
+} from './pages/AdminPage'
 import { DistributorPage } from './pages/DistributorPage'
+import { ProfilePage } from './components/ProfilePage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
+import { ThemeProvider } from './components/theme-provider'
 import { Toaster } from './components/ui/sonner'
 
+// Type definitions
 export type UserRole = 'worker' | 'admin' | 'distributor' | null
 
 export interface User {
@@ -21,6 +31,8 @@ export interface User {
   department: string
   role: UserRole
   unique_number: number
+  phone?: string
+  profilePicture?: string
 }
 
 export interface MealOption {
@@ -45,30 +57,35 @@ export interface MealSelection {
   collected?: boolean
 }
 
+// Main App Routes Component
 function AppRoutes() {
   const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding') === 'true'
   const currentUser = localStorage.getItem('currentUser')
 
+  // Determine initial route based on user state
+  const getInitialRoute = () => {
+    if (currentUser) {
+      const user = JSON.parse(currentUser)
+      if (user.role === 'admin') return '/admin'
+      if (user.role === 'distributor') return '/distributor'
+      return '/menu'
+    }
+    return hasSeenOnboarding ? '/login' : '/onboarding'
+  }
+
   return (
     <Routes>
+      {/* Root route - redirect based on user state */}
       <Route 
         path="/" 
-        element={
-          currentUser ? (
-            <Navigate to={
-              JSON.parse(currentUser).role === 'admin' ? '/admin' : 
-              JSON.parse(currentUser).role === 'distributor' ? '/distributor' : 
-              '/menu'
-            } replace />
-          ) : hasSeenOnboarding ? (
-            <Navigate to="/login" replace />
-          ) : (
-            <Navigate to="/onboarding" replace />
-          )
-        } 
+        element={<Navigate to={getInitialRoute()} replace />} 
       />
+
+      {/* Public routes */}
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/login" element={<LoginPage />} />
+
+      {/* Worker routes */}
       <Route 
         path="/menu" 
         element={
@@ -77,14 +94,25 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
+
+      {/* Admin routes */}
       <Route 
-        path="/admin/*" 
+        path="/admin" 
         element={
           <ProtectedRoute requiredRole="admin">
             <AdminPage />
           </ProtectedRoute>
-        } 
-      />
+        }
+      >
+        <Route index element={<AdminDashboardPage />} />
+        <Route path="addmenu" element={<AdminAddMenuPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
+        <Route path="distributors" element={<AdminDistributorsPage />} />
+        <Route path="dailyreport" element={<AdminDailyReportPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+      </Route>
+
+      {/* Distributor routes */}
       <Route 
         path="/distributor" 
         element={
@@ -93,17 +121,33 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
+
+      {/* Profile routes - accessible by all authenticated users */}
+      <Route 
+        path="/profile" 
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* Catch-all route - redirect to home */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
 
+// Main App Component
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppRoutes />
-        <Toaster position="top-center" />
-      </Router>
-    </AuthProvider>
+    <ThemeProvider defaultTheme="light" storageKey="ramoth-ui-theme">
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+          <Toaster position="top-center" />
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
-import { LogOut, MapPin, Clock, Check, AlertCircle, UtensilsCrossed, Calendar, User } from 'lucide-react';
+import { LogOut, MapPin, Clock, Check, AlertCircle, UtensilsCrossed, Calendar, User, UserCircle } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { WeeklyMenuView } from './WeeklyMenuView';
 import { NotificationSystem } from './NotificationSystem';
 import type { User as UserType, DailyMenu, MealSelection } from '../App';
@@ -215,7 +216,18 @@ export function WorkerDashboard({
               <img src={logo} alt="Ramoth Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
               <div>
                 <h2 className="text-lg sm:text-xl font-semibold">Ramoth Menu App</h2>
-                <p className="text-xs sm:text-sm text-gray-600">{user.name}</p>
+                <button 
+                  onClick={() => window.location.href = '/profile'}
+                  className="flex items-center gap-2 hover:bg-gray-100 rounded p-1 transition-colors"
+                >
+                  <Avatar className="w-6 h-6">
+                    <AvatarImage src={user.profilePicture} />
+                    <AvatarFallback className="text-xs">
+                      {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-xs sm:text-sm text-gray-600">{user.name}</p>
+                </button>
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">

@@ -3,7 +3,8 @@ import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Badge } from './ui/badge'
 import { toast } from 'sonner@2.0.3'
-import { LogOut, Check, Package, Users, Clock, Search } from 'lucide-react'
+import { LogOut, Check, Package, Users, Clock, Search, UserCircle } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import type { User as UserType, MealSelection } from '../App'
 import logo from '../logo.png'
 
@@ -25,6 +26,8 @@ export function DistributorDashboard({
   const [currentTime, setCurrentTime] = useState(new Date())
   const [foodReady, setFoodReady] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectionFilter, setSelectionFilter] = useState<string>('all')
+  const [departmentFilter, setDepartmentFilter] = useState<string[]>([])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -45,11 +48,22 @@ export function DistributorDashboard({
     toast.success('Food status updated - Ready for collection!')
   }
 
-  const filteredSelections = selections.filter(selection =>
-    selection.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    selection.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    selection.mealName.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredSelections = selections.filter(selection => {
+    const matchesSearch = selection.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      selection.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      selection.mealName.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesSelection = selectionFilter === 'all' ||
+      (selectionFilter === 'collected' && selection.collected) ||
+      (selectionFilter === 'pending' && !selection.collected)
+    
+    const matchesDepartment = departmentFilter.length === 0 ||
+      departmentFilter.includes(selection.department)
+    
+    return matchesSearch && matchesSelection && matchesDepartment
+  })
+  
+  const uniqueDepartments = [...new Set(selections.map(s => s.department))].sort()
 
   const mealGroups = filteredSelections.reduce((acc, selection) => {
     if (!acc[selection.mealName]) {
@@ -73,7 +87,18 @@ export function DistributorDashboard({
               <img src={logo} alt="Ramoth Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
               <div>
                 <h2 className="text-lg sm:text-xl font-semibold">Ramoth Menu App - Distributor</h2>
-                <p className="text-xs sm:text-sm text-gray-600">{user.name}</p>
+                <button 
+                  onClick={() => window.location.href = '/profile'}
+                  className="flex items-center gap-2 hover:bg-gray-100 rounded p-1 transition-colors"
+                >
+                  <Avatar className="w-6 h-6">
+                    <AvatarImage src={user.profile_picture} />
+                    <AvatarFallback className="text-xs">
+                      {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-xs sm:text-sm text-gray-600">{user.name}</p>
+                </button>
               </div>
             </div>
             <Button onClick={onLogout} variant="outline" size="sm">
@@ -107,9 +132,9 @@ export function DistributorDashboard({
           </CardContent>
         </Card>
 
-        {/* Search Bar */}
+        {/* Search and Filters */}
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <input
@@ -119,6 +144,41 @@ export function DistributorDashboard({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex gap-2">
+                {['all', 'collected', 'pending'].map((filter) => (
+                  <Button
+                    key={filter}
+                    variant={selectionFilter === filter ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectionFilter(filter)}
+                    className={`text-xs capitalize ${selectionFilter === filter ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                  >
+                    {filter}
+                  </Button>
+                ))}
+              </div>
+              
+              <div className="flex-1">
+                <select
+                  value={departmentFilter.length === 0 ? 'all' : departmentFilter[0]}
+                  onChange={(e) => {
+                    if (e.target.value === 'all') {
+                      setDepartmentFilter([])
+                    } else {
+                      setDepartmentFilter([e.target.value])
+                    }
+                  }}
+                  className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Departments</option>
+                  {uniqueDepartments.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </CardContent>
         </Card>

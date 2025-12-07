@@ -1,65 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import { Button } from '../../components/ui/button'
 import { UtensilsCrossed } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
-import { MealSelection } from '../../App'
+import { useGlobalState } from '../../lib/globalState'
 
 export function AdminDashboardPage() {
-  const [totalWorkers, setTotalWorkers] = useState(0)
-  const [recentSelections, setRecentSelections] = useState<MealSelection[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { dashboardStats, recentSelections, isLoading, fetchDashboardData } = useGlobalState()
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetchDashboardData()
+    const today = new Date().toISOString().split('T')[0]
+    fetchDashboardData(today)
   }, [])
 
-  const fetchDashboardData = async () => {
-    try {
-      setIsLoading(true)
-      
-      // Fetch workers count from your users table
-      const { data: workers, error: workersError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('role', 'worker')
 
-      if (workersError) throw workersError
-      setTotalWorkers(workers?.length || 0)
-
-      // Fetch recent selections with user data
-      const { data: selectionsData, error: selectionsError } = await supabase
-        .from('selections')
-        .select(`
-          *,
-          users!inner(name, department)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(10)
-
-      if (selectionsError) throw selectionsError
-
-      const formattedSelections: MealSelection[] = selectionsData?.map(selection => ({
-        userId: selection.user_id,
-        userName: selection.users.name,
-        department: selection.users.department,
-        mealId: selection.meal_id,
-        mealName: selection.meal_name,
-        date: selection.date,
-        time: new Date(selection.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      })) || []
-
-      setRecentSelections(formattedSelections)
-    } catch (error) {
-      console.error('Failed to fetch dashboard data:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const todaySelections = recentSelections.filter(s => s.date === new Date().toISOString().split('T')[0])
 
   if (isLoading) {
     return (
@@ -84,18 +39,19 @@ export function AdminDashboardPage() {
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex gap-3 ml-auto">
           <Button 
             onClick={() => navigate('/admin/addmenu')} 
-            className="bg-orange-600 hover:bg-orange-700 text-white"
+            className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 text-sm"
           >
-            ➕ Add Weekly Menu
+            ➕ Add Menu
           </Button>
           <Button 
             onClick={() => navigate('/admin/dailyreport')} 
             variant="outline"
+            className="px-3 py-2 text-sm"
           >
-            📄 Daily Reports
+            📄 Reports
           </Button>
         </div>
       </div>
@@ -107,7 +63,7 @@ export function AdminDashboardPage() {
             <CardTitle className="text-white text-sm font-medium">Workers Selected</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <p className="text-3xl font-bold">{todaySelections.length}</p>
+            <p className="text-3xl font-bold">{dashboardStats.todaySelections}</p>
             <p className="text-sm text-blue-100 mt-1">Total selections today</p>
           </CardContent>
         </Card>
@@ -117,7 +73,7 @@ export function AdminDashboardPage() {
             <CardTitle className="text-white text-sm font-medium">Total Workers</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <p className="text-3xl font-bold">{totalWorkers}</p>
+            <p className="text-3xl font-bold">{dashboardStats.totalWorkers}</p>
             <p className="text-sm text-orange-100 mt-1">Registered workers</p>
           </CardContent>
         </Card>
@@ -140,7 +96,7 @@ export function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="pt-0">
             <p className="text-3xl font-bold">
-              {totalWorkers > 0 ? ((todaySelections.length / totalWorkers) * 100).toFixed(1) : 0}%
+              {dashboardStats.selectionRate.toFixed(1)}%
             </p>
             <p className="text-sm text-purple-100 mt-1">Today's rate</p>
           </CardContent>
@@ -155,7 +111,7 @@ export function AdminDashboardPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={fetchDashboardData}
+              onClick={() => fetchDashboardData(new Date().toISOString().split('T')[0])}
               className="text-blue-600 hover:text-blue-700"
             >
               Refresh
@@ -170,23 +126,34 @@ export function AdminDashboardPage() {
               <p className="text-sm mt-2">Selections will appear here as workers choose their meals</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[600px] overflow-y-auto">
-              {recentSelections.map((selection, index) => (
-                <div 
-                  key={`${selection.userId}-${selection.date}-${index}`} 
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto">
+                {recentSelections.map((selection, index) => (
+                  <div 
+                    key={`${selection.userId}-${selection.date}-${index}`} 
+                    className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
+                  >
+                    <div className="mb-2">
+                      <p className="font-medium text-gray-900 text-sm">{selection.userName}</p>
+                      <p className="text-xs text-gray-600">{selection.department}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-blue-600">{selection.mealName}</p>
+                      <p className="text-xs text-gray-500">{selection.date} at {selection.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 text-center">
+                <Button 
+                  onClick={() => navigate('/admin/dailyreport')}
+                  variant="outline"
+                  size="sm"
                 >
-                  <div className="mb-2 sm:mb-0">
-                    <p className="font-medium text-gray-900">{selection.userName}</p>
-                    <p className="text-sm text-gray-600">{selection.department}</p>
-                  </div>
-                  <div className="text-left sm:text-right">
-                    <p className="text-sm font-medium text-blue-600">{selection.mealName}</p>
-                    <p className="text-sm text-gray-500">{selection.date} at {selection.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  View More
+                </Button>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

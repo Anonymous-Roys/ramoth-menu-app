@@ -3,15 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Badge } from './ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { User } from '../App'
 import { supabase } from '../lib/supabase'
 import { toast } from 'sonner'
-import { Copy, Search, Trash2, Edit } from 'lucide-react'
+import { Copy, Search, Trash2, Edit, Filter } from 'lucide-react'
 
 export function UserList() {
   const [users, setUsers] = useState<User[]>([])
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [roleFilter, setRoleFilter] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
@@ -20,13 +22,18 @@ export function UserList() {
   }, [])
 
   useEffect(() => {
-    const filtered = users.filter(user =>
+    let filtered = users.filter(user =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.generated_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.department.toLowerCase().includes(searchTerm.toLowerCase())
     )
+    
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(user => user.role === roleFilter)
+    }
+    
     setFilteredUsers(filtered)
-  }, [users, searchTerm])
+  }, [users, searchTerm, roleFilter])
 
   const fetchUsers = async () => {
     try {
@@ -116,19 +123,34 @@ export function UserList() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>User Management</CardTitle>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <CardTitle>All Users ({filteredUsers.length})</CardTitle>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex gap-2">
+            {['all', 'worker', 'admin', 'distributor'].map((role) => (
+              <Button
+                key={role}
+                variant={roleFilter === role ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setRoleFilter(role)}
+                className={`capitalize ${roleFilter === role ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+              >
+                {role === 'all' ? 'All' : role === 'worker' ? 'Workers' : role === 'admin' ? 'Admins' : 'Distributors'}
+              </Button>
+            ))}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-96 overflow-y-auto">
           {filteredUsers.map((user) => (
             <div key={user.id} className="border rounded-lg p-4 space-y-2">
               {editingUser?.id === user.id ? (
@@ -161,7 +183,10 @@ export function UserList() {
                       <p className="text-sm text-gray-600">{user.department}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                      <Badge variant={
+                        user.role === 'admin' ? 'default' : 
+                        user.role === 'distributor' ? 'destructive' : 'secondary'
+                      }>
                         {user.role}
                       </Badge>
                       <Button

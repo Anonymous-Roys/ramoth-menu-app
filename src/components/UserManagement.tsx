@@ -3,13 +3,12 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { User } from '../App'
 import { supabase } from '../lib/supabase'
 import { toast } from 'sonner'
 
 interface UserManagementProps {
-  onUserCreated: (user: User) => void
+  onUserCreated: () => void
 }
 
 export function UserManagement({ onUserCreated }: UserManagementProps) {
@@ -72,7 +71,7 @@ export function UserManagement({ onUserCreated }: UserManagementProps) {
         unique_number: data.unique_number
       }
 
-      onUserCreated(newUser)
+      onUserCreated()
       toast.success(`User created! ID: ${generatedId}`)
       
       setFormData({
@@ -92,83 +91,79 @@ export function UserManagement({ onUserCreated }: UserManagementProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create New User</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="first_name">First Name *</Label>
-              <Input
-                id="first_name"
-                value={formData.first_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="last_name">Last Name *</Label>
-              <Input
-                id="last_name"
-                value={formData.last_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
-                required
-              />
-            </div>
-          </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="first_name">First Name *</Label>
+          <Input
+            id="first_name"
+            value={formData.first_name}
+            onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="last_name">Last Name *</Label>
+          <Input
+            id="last_name"
+            value={formData.last_name}
+            onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
+            required
+          />
+        </div>
+      </div>
 
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-            />
-          </div>
+      <div>
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          value={formData.email}
+          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+        />
+      </div>
 
-          <div>
-            <Label htmlFor="date_of_birth">Date of Birth</Label>
-            <Input
-              id="date_of_birth"
-              type="date"
-              value={formData.date_of_birth}
-              onChange={(e) => setFormData(prev => ({ ...prev, date_of_birth: e.target.value }))}
-            />
-          </div>
+      <div>
+        <Label htmlFor="date_of_birth">Date of Birth</Label>
+        <Input
+          id="date_of_birth"
+          type="date"
+          value={formData.date_of_birth}
+          onChange={(e) => setFormData(prev => ({ ...prev, date_of_birth: e.target.value }))}
+        />
+      </div>
 
-          <div>
-            <Label htmlFor="department">Job Title *</Label>
-            <Input
-              id="department"
-              value={formData.department}
-              onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-              required
-            />
-          </div>
+      <div>
+        <Label htmlFor="department">Job Title *</Label>
+        <Input
+          id="department"
+          value={formData.department}
+          onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+          required
+        />
+      </div>
 
-          <div>
-            <Label htmlFor="role">Role</Label>
-            <Select value={formData.role} onValueChange={(value: 'worker' | 'admin') => 
-              setFormData(prev => ({ ...prev, role: value }))
-            }>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="worker">Worker</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <div>
+        <Label htmlFor="role">Role</Label>
+        <div className="flex gap-2">
+          {['worker', 'admin', 'distributor'].map((role) => (
+            <Button
+              key={role}
+              type="button"
+              variant={formData.role === role ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFormData(prev => ({ ...prev, role: role as 'worker' | 'admin' }))}
+              className={`capitalize flex-1 ${formData.role === role ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+            >
+              {role}
+            </Button>
+          ))}
+        </div>
+      </div>
 
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? 'Creating...' : 'Create User'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+      <Button type="submit" disabled={isLoading} className="w-full">
+        {isLoading ? 'Creating...' : 'Create User'}
+      </Button>
+    </form>
   )
 }

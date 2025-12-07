@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from './ui/button'
-import { LogOut, UtensilsCrossed, LayoutDashboard, Calendar, FileText, Settings, Menu, X, UserCheck } from 'lucide-react'
+import { LogOut, UtensilsCrossed, LayoutDashboard, Calendar, FileText, Settings, Menu, X } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { User } from '../App'
 import logo from '../logo.png'
@@ -19,7 +19,6 @@ export function ResponsiveSidebar({ user, onLogout }: ResponsiveSidebarProps) {
     { label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
     { label: 'Add Menu', icon: Calendar, path: '/admin/addmenu' },
     { label: 'Users', icon: Settings, path: '/admin/users' },
-    { label: 'Distributors', icon: UserCheck, path: '/admin/distributors' },
     { label: 'Daily Report', icon: FileText, path: '/admin/dailyreport' },
   ]
 
@@ -64,11 +63,11 @@ export function ResponsiveSidebar({ user, onLogout }: ResponsiveSidebarProps) {
 
       {/* Sidebar */}
       <aside className={`
-        fixed md:static top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300
+        fixed top-0 left-0 h-screen w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 overflow-hidden
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         md:shadow-none md:border-r md:border-gray-200 md:flex-shrink-0
       `}>
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full overflow-y-auto">
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
