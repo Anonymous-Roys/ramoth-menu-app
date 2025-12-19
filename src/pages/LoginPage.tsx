@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { User } from '../App'
 import { supabase } from '../lib/supabase'
+import loginBg from '../loginbg.jpeg'
+import logo from '../logo.png'
 import { toast } from 'sonner'
 
 export function LoginPage() {
@@ -143,23 +145,28 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center relative"
+      style={{ backgroundImage: `url(${loginBg})` }}
+    >
+      <div className="absolute inset-0 bg-black/40" />
+      <Card className="relative z-10 w-full max-w-md shadow-lg bg-opaque/90 backdrop-blur-sm">
+        <CardHeader className="text-center flex flex-col items-center">
+          <img src={logo} alt="Ramoth logo" className="w-20 h-auto mb-2 rounded-md shadow-sm" />
           <CardTitle className="text-2xl font-bold text-gray-800">Login</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs defaultValue="login" className="w-full opacity-90">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="forgot">Forgot ID</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
-                <div>
+                <div className='opacity-70'>
                   <Input
                     id="userId"
-                    placeholder="Enter your user ID (e.g., darhin4332)"
+                    placeholder="Enter your user ID (e.g., mowusu6734)"
                     onKeyDown={(e) => {
                       if (e.key === " ") e.preventDefault();
                     }}
@@ -175,7 +182,7 @@ export function LoginPage() {
                     <p className="text-red-500 text-sm mt-1">{loginError}</p>
                   )}
                 </div>
-                <Button type="submit" disabled={isLoading} className="w-full">
+                <Button variant='outline' type="submit" disabled={isLoading} className="w-full text-white">
                   {isLoading ? 'Logging in...' : 'Login'}
                 </Button>
               </form>
@@ -235,8 +242,8 @@ export function LoginPage() {
             </TabsContent>
           </Tabs>
           
-          <div className="mt-4 text-center">
-            <Button variant="link" onClick={handleShowOnboarding}>
+          <div className="mt-4 text-center text-white">
+            <Button variant="ghost" onClick={handleShowOnboarding}>
               View App Tour
             </Button>
           </div>

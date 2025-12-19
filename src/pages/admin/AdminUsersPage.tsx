@@ -19,8 +19,8 @@ export function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1>👥 User Management</h1>
+      <div className="flex items-center justify-between w-full text-center">
+        <h1 className='font-bold text-xl'>User management</h1>
         <Button 
           onClick={() => setIsModalOpen(true)}
           className="bg-blue-600 hover:bg-blue-700"

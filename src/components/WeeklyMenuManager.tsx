@@ -33,7 +33,7 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
       initialData[dateStr] = existingMenu?.meals || [
         { id: '1', name: '', description: '' },
         { id: '2', name: '', description: '' },
-        { id: '3', name: '', description: '' }
+        //{ id: '3', name: '', description: '' }
       ];
     }
     
@@ -167,7 +167,7 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
         [date]: [
           { id: '1', name: '', description: '' },
           { id: '2', name: '', description: '' },
-          { id: '3', name: '', description: '' }
+          //{ id: '3', name: '', description: '' }
         ]
       }));
 
@@ -193,10 +193,10 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
       <Card>
         <CardHeader>
           <div>
-            <div className='font-black text-xl py-4 my-4 text-center align-middle w-full'>
-              <strong>🗓️ Add Weekly Menu</strong>
-            </div>
-            <div className="grid grid-cols-2 gap-2 md:flex md:gap-4">
+            {/* <div className='font-black text-xl py-4 my-4 text-center align-middle w-full'>
+              <strong>Add Weekly Menu</strong>
+            </div> */}
+            <div className="grid grid-cols-2 gap-2 md:flex md:gap-4 w-full justify-end">
               <Button onClick={handleLoadTemplate} variant="outline" size="sm">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Load Template

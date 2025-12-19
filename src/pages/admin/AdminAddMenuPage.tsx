@@ -48,9 +48,9 @@ export function AdminAddMenuPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
+        <div className='w-full text-center'>
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-            🗓️ Add Weekly Menu
+            Add Weekly Menu
           </h1>
           <p className="text-gray-600 mt-1">
             Manage weekly meal options for workers
