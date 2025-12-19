@@ -33,7 +33,7 @@ export function AdminDashboardPage() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-            👨💼 Admin Dashboard
+            Admin Dashboard
           </h1>
           <p className="text-gray-600 mt-1">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -42,7 +42,7 @@ export function AdminDashboardPage() {
         <div className="flex gap-3 ml-auto">
           <Button 
             onClick={() => navigate('/admin/addmenu')} 
-            className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 text-sm"
+            className="bg-gray-600 hover:bg-orange-700 text-white px-3 py-2 text-sm"
           >
             ➕ Add Menu
           </Button>
@@ -58,47 +58,47 @@ export function AdminDashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+        <Card className="bg-gray-100 text-black border-0 shadow-lg">
           <CardHeader className="pb-3">
-            <CardTitle className="text-white text-sm font-medium">Workers Selected</CardTitle>
+            <CardTitle className="text-black text-sm font-medium">Workers Selected</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <p className="text-3xl font-bold">{dashboardStats.todaySelections}</p>
-            <p className="text-sm text-blue-100 mt-1">Total selections today</p>
+            <p className="text-sm text-black-100 mt-1">Total selections today</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg">
+        <Card className="bg-gray-100 text-black border-0 shadow-lg">
           <CardHeader className="pb-3">
-            <CardTitle className="text-white text-sm font-medium">Total Workers</CardTitle>
+            <CardTitle className="text-black text-sm font-medium">Total Workers</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <p className="text-3xl font-bold">{dashboardStats.totalWorkers}</p>
-            <p className="text-sm text-orange-100 mt-1">Registered workers</p>
+            <p className="text-sm text-black-100 mt-1">Registered workers</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg">
+        <Card className="bg-gray-100 text-black border-0 shadow-lg">
           <CardHeader className="pb-3">
-            <CardTitle className="text-white text-sm font-medium">Current Time</CardTitle>
+            <CardTitle className="text-black text-sm font-medium">Current Time</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <p className="text-3xl font-bold">
               {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
             </p>
-            <p className="text-sm text-green-100 mt-1">Deadline: 9:00 AM</p>
+            <p className="text-sm text-black-100 mt-1">Deadline: 9:00 AM</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg">
+        <Card className="bg-gray-100 text-black border-0 shadow-lg">
           <CardHeader className="pb-3">
-            <CardTitle className="text-white text-sm font-medium">Selection Rate</CardTitle>
+            <CardTitle className="text-black text-sm font-medium">Selection Rate</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <p className="text-3xl font-bold">
               {dashboardStats.selectionRate.toFixed(1)}%
             </p>
-            <p className="text-sm text-purple-100 mt-1">Today's rate</p>
+            <p className="text-sm text-black mt-1">Today's rate</p>
           </CardContent>
         </Card>
       </div>
@@ -112,7 +112,7 @@ export function AdminDashboardPage() {
               variant="ghost" 
               size="sm" 
               onClick={() => fetchDashboardData(new Date().toISOString().split('T')[0])}
-              className="text-blue-600 hover:text-blue-700"
+              className="text-gray-600 hover:text-gray-700"
             >
               Refresh
             </Button>

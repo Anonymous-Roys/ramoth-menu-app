@@ -38,7 +38,7 @@ export function WorkerDashboard({
   // Company location: 6.2025094, -1.7130153
   const COMPANY_LAT = 6.2025094;
   const COMPANY_LNG = -1.7130153;
-  const RADIUS_METERS = 3000; // Distance radius in meters
+  const RADIUS_METERS = 100; // Distance radius in meters
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -51,33 +51,62 @@ export function WorkerDashboard({
   }, []);
 
   const checkLocation = () => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const distance = calculateDistance(
-            position.coords.latitude,
-            position.coords.longitude,
-            COMPANY_LAT,
-            COMPANY_LNG
-          );
-          
-          setIsOnSite(distance <= RADIUS_METERS);
-          
-          if (distance > RADIUS_METERS) {
-            toast.error('You are not at the company location. Meal selection is disabled.');
-          }
-        },
-        () => {
-          // For demo, allow access even if GPS fails
-          setIsOnSite(true);
-          toast.info('GPS verification simulated for demo');
-        }
+  if (!('geolocation' in navigator)) {
+    setIsOnSite(false);
+    toast.error('Geolocation not supported.');
+    return;
+  }
+
+  const watchId = navigator.geolocation.watchPosition(
+    (position) => {
+      const now = Date.now();
+
+      // 1️⃣ Reject cached / stale location
+      if (now - position.timestamp > 30000) {
+        setIsOnSite(false);
+        toast.error('Cached location detected. Please wait for fresh GPS.');
+        return;
+      }
+
+      const { latitude, longitude, accuracy } = position.coords;
+
+      // 2️⃣ Reject poor accuracy
+      if (accuracy > 100) {
+        setIsOnSite(false);
+        toast.error(`Low GPS accuracy (${Math.round(accuracy)}m).`);
+        return;
+      }
+
+      // 3️⃣ Distance check
+      const distance = calculateDistance(
+        latitude,
+        longitude,
+        COMPANY_LAT,
+        COMPANY_LNG
       );
-    } else {
-      setIsOnSite(true);
-      toast.info('GPS verification simulated for demo');
+
+      setIsOnSite(distance <= RADIUS_METERS);
+
+      if (distance > RADIUS_METERS) {
+        toast.error(`You are ${Math.round(distance)}m away from the office.`);
+      }
+
+      // 🛑 Stop watching after first valid fix
+      navigator.geolocation.clearWatch(watchId);
+    },
+    () => {
+      setIsOnSite(false);
+      toast.error('Location permission denied.');
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 15000
     }
-  };
+  );
+};
+
+
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371e3;
@@ -250,20 +279,20 @@ export function WorkerDashboard({
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <div className="max-w-4xl mx-auto p-4 space-y-6 bg-gray-50">
         {/* Welcome Banner */}
-        <Card className="bg-gradient-to-r from-blue-600 to-blue-700 text-white border-0">
+        <Card className="bg-gradient-to-r from-gray-100 to-gray-200 text-black border-0 shadow-gray-200 shadow-lg">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-white mb-1">
+                <h3 className="text-black mb-1 text-2xl font-semibold">
                   {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </h3>
-                <p className="text-blue-100">Hello, {user.name} 👋</p>
+                <p className="text-gray-600">Hello, {user.name} 👋</p>
               </div>
               <div className="text-right">
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-                  <p className="text-sm text-blue-100">Current Time</p>
+                <div className="bg-gray-300 backdrop-blur-sm rounded-lg px-4 py-2">
+                  <p className="text-sm text-black-100">Current Time</p>
                   <p className="text-xl">
                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                   </p>
@@ -275,15 +304,15 @@ export function WorkerDashboard({
 
         {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className={isOnSite ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+          <Card className={isOnSite ? 'border-blue-200 bg-gray-50' : 'border-red-100 bg-gray-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-xl ${isOnSite ? 'bg-green-100' : 'bg-red-100'}`}>
-                  <MapPin className={`w-5 h-5 ${isOnSite ? 'text-green-600' : 'text-red-600'}`} />
+                <div className={`p-3 rounded-xl ${isOnSite ? 'bg-blue-100' : 'bg-amber-100'}`}>
+                  <MapPin className={`w-5 h-5 ${isOnSite ? 'text-blue-600' : 'text-gray-600'}`} />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Location</p>
-                  <p className={isOnSite ? 'text-green-600' : 'text-red-600'}>
+                  <p className={isOnSite ? 'text-blue-600' : 'text-amber-600'}>
                     {isOnSite ? 'On Site ✓' : 'Off Site'}
                   </p>
                 </div>
@@ -293,7 +322,7 @@ export function WorkerDashboard({
 
 
 
-          <Card className={beforeDeadline ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}>
+          <Card className={beforeDeadline ? 'border-blue-200 bg-gray-50' : 'border-gray-200 bg-gray-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className={`p-3 rounded-xl ${beforeDeadline ? 'bg-blue-100' : 'bg-gray-100'}`}>
@@ -309,15 +338,15 @@ export function WorkerDashboard({
             </CardContent>
           </Card>
 
-          <Card className={alreadySelected ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}>
+          <Card className={alreadySelected ? 'border-blue-200 bg-gray-50' : 'border-gray-200 bg-gray-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-xl ${alreadySelected ? 'bg-green-100' : 'bg-orange-100'}`}>
-                  <Check className={`w-5 h-5 ${alreadySelected ? 'text-green-600' : 'text-orange-600'}`} />
+                <div className={`p-3 rounded-xl ${alreadySelected ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                  <Check className={`w-5 h-5 ${alreadySelected ? 'text-blue-600' : 'text-gray-600'}`} />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Selection Status</p>
-                  <p className={alreadySelected ? 'text-green-600' : 'text-orange-600'}>
+                  <p className={alreadySelected ? 'text-blue-600' : 'text-gray-600'}>
                     {alreadySelected ? 'Complete ✓' : 'Pending'}
                   </p>
                 </div>
@@ -338,10 +367,10 @@ export function WorkerDashboard({
         )}
 
         {alreadySelected && todaySelection && (
-          <Alert className="border-green-200 bg-green-50">
-            <Check className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
-              You selected <strong>{todaySelection.mealName}</strong>Thank you!
+          <Alert className="border-blue-200 bg-blue-50">
+            <Check className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              <div>You selected <strong>{todaySelection.mealName}</strong>.Thank you!</div>
             </AlertDescription>
           </Alert>
         )}
@@ -349,8 +378,8 @@ export function WorkerDashboard({
         {/* Today's Meals */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              🍛 Today's Meals
+            <CardTitle className="flex items-center gap-2 font-semibold text-xl">
+              Today's Meals
             </CardTitle>
             <CardDescription>
               {alreadySelected ? 'Click to update your selection (before 8:00 AM)' : 'Select your preferred meal'}
@@ -373,7 +402,7 @@ export function WorkerDashboard({
                       key={meal.id} 
                       className={`transition-all ${
                         isSelected
-                          ? 'border-green-500 bg-green-50 shadow-md' 
+                          ? 'border-blue-500 bg-blue-50 shadow-md' 
                           : canSelect
                           ? 'hover:border-blue-400 hover:shadow-md cursor-pointer'
                           : 'opacity-60'
@@ -382,10 +411,10 @@ export function WorkerDashboard({
                     >
                       <CardContent className="pt-6">
                         <div className="space-y-3">
-                          <div className="flex items-start justify-between">
+                          <div className="flex items-start justify-between font-semibold">
                             <h4>{meal.name}</h4>
                             {isSelected && (
-                              <Badge className="bg-green-600">Selected</Badge>
+                              <Badge className="bg-blue-600">Selected</Badge>
                             )}
                           </div>
                           <p className="text-sm text-gray-600">{meal.description}</p>
@@ -431,6 +460,9 @@ export function WorkerDashboard({
                   <h4 className="mb-2">Selection Requirements</h4>
                   <ul className="text-sm text-gray-700 space-y-1">
                     <li>🔒 You must be on-site to select</li>
+                    <li className="text-amber-600">
+                        📌 GPS must be live, accurate, and within 100m of the office.</li>
+
                     <li>🕒 Selection closes at 8:00 AM</li>
                   </ul>
                 </div>
