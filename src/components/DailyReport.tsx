@@ -98,6 +98,7 @@ export function DailyReport() {
       const selectedWorkers = allWorkers.filter(w => w.hasSelected)
       // Group workers by department
       const groupedByDepartment = selectedWorkers.reduce((groups, worker) => {
+        
         if (!groups[worker.department]) groups[worker.department] = []
         groups[worker.department].push(worker)
         return groups
@@ -167,8 +168,8 @@ export function DailyReport() {
       pdf.setFontSize(8)
       pdf.setTextColor(0, 0, 0)
 
-// Render workers in rows of 3
-for (let i = 0; i < workersInDept.length; i += 3) {
+// Render workers in rows of 2
+for (let i = 0; i < workersInDept.length; i += 2) {
   if (yPos > 270) {
     pdf.addPage()
     yPos = 10
