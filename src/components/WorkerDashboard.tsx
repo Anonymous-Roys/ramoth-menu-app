@@ -35,10 +35,11 @@ export function WorkerDashboard({
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [showWeeklyMenu, setShowWeeklyMenu] = useState(false);
 
-  // Company location: 6.2025094, -1.7130153
-  const COMPANY_LAT = 6.2025094;
-  const COMPANY_LNG = -1.7130153;
-  const RADIUS_METERS = 100; // Distance radius in meters
+  // Company location: 6.2025094, -1.7130153 6.20530, -1.71848 ---6.204614, -1.719546
+
+  const COMPANY_LAT = 6.204614;
+  const COMPANY_LNG = -1.719546;
+  const RADIUS_METERS = 3000; // Distance radius in meters
 
   useEffect(() => {
     const timer = setInterval(() => {
