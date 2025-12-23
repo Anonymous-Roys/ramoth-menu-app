@@ -37,21 +37,21 @@ export function WorkerDashboard({
 
   // Company location: 6.2025094, -1.7130153 6.20530, -1.71848 ---6.204614, -1.719546
 
-  const COMPANY_LAT = 6.204614;
+  /* const COMPANY_LAT = 6.204614;
   const COMPANY_LNG = -1.719546;
-  const RADIUS_METERS = 3000; // Distance radius in meters
+  const RADIUS_METERS = 3000; // Distance radius in meters */
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
 
-    checkLocation();
+    //checkLocation();
 
     return () => clearInterval(timer);
   }, []);
 
-  const checkLocation = () => {
+  /* const checkLocation = () => {
   if (!('geolocation' in navigator)) {
     setIsOnSite(false);
     toast.error('Geolocation not supported.');
@@ -105,11 +105,11 @@ export function WorkerDashboard({
       timeout: 15000
     }
   );
-};
+}; */
 
 
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+ /*  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371e3;
     const φ1 = lat1 * Math.PI / 180;
     const φ2 = lat2 * Math.PI / 180;
@@ -122,7 +122,7 @@ export function WorkerDashboard({
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c;
-  };
+  }; */
 
 
 
@@ -150,7 +150,7 @@ export function WorkerDashboard({
   const alreadySelected = hasSelectedToday();
   const todaySelection = getTodaySelection();
   const beforeDeadline = isBeforeDeadline();
-  const canSelect = isOnSite && beforeDeadline;
+  const canSelect = beforeDeadline;
 
   const handleMealSelect = (mealId: string, mealName: string) => {
     if (!isBeforeDeadline()) {
@@ -305,7 +305,7 @@ export function WorkerDashboard({
 
         {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className={isOnSite ? 'border-blue-200 bg-gray-50' : 'border-red-100 bg-gray-50'}>
+          {/*<Card className={isOnSite ? 'border-blue-200 bg-gray-50' : 'border-red-100 bg-gray-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className={`p-3 rounded-xl ${isOnSite ? 'bg-blue-100' : 'bg-amber-100'}`}>
@@ -319,7 +319,7 @@ export function WorkerDashboard({
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card>*/}
 
 
 
@@ -460,9 +460,9 @@ export function WorkerDashboard({
                 <div>
                   <h4 className="mb-2">Selection Requirements</h4>
                   <ul className="text-sm text-gray-700 space-y-1">
-                    <li>🔒 You must be on-site to select</li>
+                    {/* <li>🔒 You must be on-site to select</li>
                     <li className="text-amber-600">
-                        📌 GPS must be live, accurate, and within 100m of the office.</li>
+                        📌 GPS must be live, accurate, and within 100m of the office.</li> */}
 
                     <li>🕒 Selection closes at 8:00 AM</li>
                   </ul>
