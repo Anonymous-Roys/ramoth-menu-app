@@ -37,16 +37,16 @@ export function WorkerDashboard({
 
   // Company location: 6.2025094, -1.7130153 6.20530, -1.71848 ---6.204614, -1.719546
 
-  /* const COMPANY_LAT = 6.204614;
+  const COMPANY_LAT = 6.204614;
   const COMPANY_LNG = -1.719546;
-  const RADIUS_METERS = 3000; // Distance radius in meters */
+  const RADIUS_METERS = 8000; // Distance radius in meters
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
 
-    //checkLocation();
+    checkLocation();
 
     return () => clearInterval(timer);
   }, []);
@@ -106,10 +106,37 @@ export function WorkerDashboard({
     }
   );
 }; */
+   
+  const checkLocation = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const distance = calculateDistance(
+            position.coords.latitude,
+            position.coords.longitude,
+            COMPANY_LAT,
+            COMPANY_LNG
+          );
+          
+          setIsOnSite(distance <= RADIUS_METERS);
+          
+          if (distance > RADIUS_METERS) {
+            toast.error('You are not at the company location. Meal selection is disabled.');
+          }
+        },
+        () => {
+          // For demo, allow access even if GPS fails
+          setIsOnSite(true);
+          toast.info('GPS verification simulated for demo');
+        }
+      );
+    } else {
+      setIsOnSite(true);
+      toast.info('GPS verification simulated for demo');
+    }
+  };
 
-
-
- /*  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371e3;
     const φ1 = lat1 * Math.PI / 180;
     const φ2 = lat2 * Math.PI / 180;
@@ -122,7 +149,7 @@ export function WorkerDashboard({
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c;
-  }; */
+  };
 
 
 
@@ -150,7 +177,7 @@ export function WorkerDashboard({
   const alreadySelected = hasSelectedToday();
   const todaySelection = getTodaySelection();
   const beforeDeadline = isBeforeDeadline();
-  const canSelect = beforeDeadline;
+  const canSelect = isOnSite && beforeDeadline;
 
   const handleMealSelect = (mealId: string, mealName: string) => {
     if (!isBeforeDeadline()) {
@@ -305,7 +332,7 @@ export function WorkerDashboard({
 
         {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/*<Card className={isOnSite ? 'border-blue-200 bg-gray-50' : 'border-red-100 bg-gray-50'}>
+          <Card className={isOnSite ? 'border-blue-200 bg-gray-50' : 'border-red-100 bg-gray-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className={`p-3 rounded-xl ${isOnSite ? 'bg-blue-100' : 'bg-amber-100'}`}>
@@ -319,7 +346,7 @@ export function WorkerDashboard({
                 </div>
               </div>
             </CardContent>
-          </Card>*/}
+          </Card>
 
 
 
