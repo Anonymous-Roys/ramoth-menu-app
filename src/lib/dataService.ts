@@ -26,6 +26,7 @@ export class DataService {
       .from('users')
       .select('*')
       .not('role', 'in', '("admin","distributor")')
+      .eq('is_active', true)
       .order('name')
 
     if (error) throw error
@@ -40,7 +41,8 @@ export class DataService {
       date_of_birth: user.date_of_birth,
       department: user.department,
       role: user.role,
-      unique_number: user.unique_number
+      unique_number: user.unique_number,
+      is_active: user.is_active ?? true
     }))
   }
 

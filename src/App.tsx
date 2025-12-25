@@ -33,6 +33,7 @@ export interface User {
   unique_number: number
   phone?: string
   profilePicture?: string
+  is_active?: boolean
 }
 
 export interface MealOption {

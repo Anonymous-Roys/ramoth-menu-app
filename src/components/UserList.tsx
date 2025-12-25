@@ -7,13 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { User } from '../App'
 import { supabase } from '../lib/supabase'
 import { toast } from 'sonner'
-import { Copy, Search, Trash2, Edit, Filter } from 'lucide-react'
+import { Copy, Search, Trash2, Edit, Filter, UserCheck, UserX, Eye, EyeOff } from 'lucide-react'
 
 export function UserList() {
   const [users, setUsers] = useState<User[]>([])
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all') // 'all', 'active', 'inactive'
   const [isLoading, setIsLoading] = useState(true)
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
@@ -32,8 +33,14 @@ export function UserList() {
       filtered = filtered.filter(user => user.role === roleFilter)
     }
     
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(user => 
+        statusFilter === 'active' ? user.is_active : !user.is_active
+      )
+    }
+    
     setFilteredUsers(filtered)
-  }, [users, searchTerm, roleFilter])
+  }, [users, searchTerm, roleFilter, statusFilter])
 
   const fetchUsers = async () => {
     try {
@@ -54,7 +61,8 @@ export function UserList() {
         date_of_birth: user.date_of_birth,
         department: user.department,
         role: user.role,
-        unique_number: user.unique_number
+        unique_number: user.unique_number,
+        is_active: user.is_active ?? true
       }))
 
       setUsers(userList)
@@ -81,13 +89,33 @@ export function UserList() {
         .from('users')
         .delete()
         .eq('id', userId)
-
       if (error) throw error
-
       setUsers(prev => prev.filter(user => user.id !== userId))
       toast.success('User deleted successfully')
     } catch (error) {
       toast.error('Failed to delete user')
+      console.error(error)
+    }
+  }
+
+  const toggleUserActive = async (user: User) => {
+    const newActiveStatus = !user.is_active
+    
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ is_active: newActiveStatus })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      setUsers(prev => prev.map(u => 
+        u.id === user.id ? { ...u, is_active: newActiveStatus } : u
+      ))
+      
+      toast.success(`User ${newActiveStatus ? 'activated' : 'deactivated'} successfully`)
+    } catch (error) {
+      toast.error('Failed to update user status')
       console.error(error)
     }
   }
@@ -99,7 +127,8 @@ export function UserList() {
         .update({
           name: updatedUser.name,
           department: updatedUser.department,
-          email: updatedUser.email
+          email: updatedUser.email,
+          is_active: updatedUser.is_active
         })
         .eq('id', updatedUser.id)
 
@@ -117,42 +146,72 @@ export function UserList() {
   }
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading users...</div>
+    return <div className="py-8 text-center">Loading users...</div>
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>All Users ({filteredUsers.length})</CardTitle>
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
             <Input
-              placeholder="Search users..."
+              placeholder="Search users by name, ID, or department..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
-          <div className="flex gap-2">
-            {['all', 'worker', 'admin', 'distributor'].map((role) => (
-              <Button
-                key={role}
-                variant={roleFilter === role ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setRoleFilter(role)}
-                className={`capitalize ${roleFilter === role ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-              >
-                {role === 'all' ? 'All' : role === 'worker' ? 'Workers' : role === 'admin' ? 'Admins' : 'Distributors'}
-              </Button>
-            ))}
+          
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-1">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Role:</span>
+              </div>
+              {['all', 'worker', 'admin', 'distributor'].map((role) => (
+                <Button
+                  key={role}
+                  variant={roleFilter === role ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setRoleFilter(role)}
+                  className={`capitalize ${roleFilter === role ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                >
+                  {role === 'all' ? 'All Roles' : role === 'worker' ? 'Workers' : role === 'admin' ? 'Admins' : 'Distributors'}
+                </Button>
+              ))}
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-1">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Status:</span>
+              </div>
+              {['all', 'active', 'inactive'].map((status) => (
+                <Button
+                  key={status}
+                  variant={statusFilter === status ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter(status)}
+                  className={`capitalize ${statusFilter === status ? 
+                    status === 'active' ? 'bg-green-600 hover:bg-green-700' : 
+                    status === 'inactive' ? 'bg-red-600 hover:bg-red-700' : 
+                    'bg-blue-600 hover:bg-blue-700' : ''}`}
+                >
+                  {status === 'all' ? 'All Status' : status === 'active' ? 
+                    <><UserCheck className="w-3 h-3 mr-1" /> Active</> : 
+                    <><UserX className="w-3 h-3 mr-1" /> Inactive</>}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="space-y-4 overflow-y-auto max-h-96">
           {filteredUsers.map((user) => (
-            <div key={user.id} className="border rounded-lg p-4 space-y-2">
+            <div key={user.id} className="p-4 space-y-2 border rounded-lg">
               {editingUser?.id === user.id ? (
                 <div className="space-y-3">
                   <Input
@@ -170,6 +229,18 @@ export function UserList() {
                     onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
                     placeholder="Email"
                   />
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`active-${editingUser.id}`}
+                      checked={editingUser.is_active ?? true}
+                      onChange={(e) => setEditingUser({...editingUser, is_active: e.target.checked})}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor={`active-${editingUser.id}`} className="text-sm font-medium text-gray-900">
+                      Active
+                    </label>
+                  </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => updateUser(editingUser)}>Save</Button>
                     <Button size="sm" variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
@@ -189,26 +260,14 @@ export function UserList() {
                       }>
                         {user.role}
                       </Badge>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditingUser(user)}
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => deleteUser(user.id, user.name)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      <Badge variant={user.is_active ? 'default' : 'secondary'}>
+                        {user.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
+                    <code className="px-2 py-1 font-mono text-sm bg-gray-100 rounded">
                       {user.generated_id}
                     </code>
                     <Button
@@ -216,7 +275,7 @@ export function UserList() {
                       variant="outline"
                       onClick={() => copyToClipboard(user.generated_id)}
                     >
-                      <Copy className="h-3 w-3" />
+                      <Copy className="w-3 h-3" />
                     </Button>
                   </div>
                   
@@ -227,13 +286,48 @@ export function UserList() {
                   <div className="text-xs text-gray-500">
                     Unique Number: {user.unique_number}
                   </div>
+                  
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditingUser(user)}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="w-3 h-3" />
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={user.is_active ? "destructive" : "default"}
+                        onClick={() => toggleUserActive(user)}
+                        className="flex items-center gap-1"
+                      >
+                        {user.is_active ? (
+                          <><EyeOff className="w-3 h-3" /> Deactivate</>
+                        ) : (
+                          <><Eye className="w-3 h-3" /> Activate</>
+                        )}
+                      </Button>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => deleteUser(user.id, user.name)}
+                      className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </Button>
+                  </div>
                 </>
               )}
             </div>
           ))}
           
           {filteredUsers.length === 0 && !isLoading && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="py-8 text-center text-gray-500">
               No users found
             </div>
           )}

@@ -51,7 +51,8 @@ export function UserManagement({ onUserCreated }: UserManagementProps) {
           date_of_birth: formData.date_of_birth || null,
           department: formData.department,
           role: formData.role,
-          unique_number: uniqueNumber
+          unique_number: uniqueNumber,
+          is_active: true
         })
         .select()
         .single()
@@ -68,7 +69,8 @@ export function UserManagement({ onUserCreated }: UserManagementProps) {
         date_of_birth: data.date_of_birth,
         department: data.department,
         role: data.role,
-        unique_number: data.unique_number
+        unique_number: data.unique_number,
+        is_active: data.is_active ?? true
       }
 
       onUserCreated()

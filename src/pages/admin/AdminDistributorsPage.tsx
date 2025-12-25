@@ -42,7 +42,8 @@ export function AdminDistributorsPage() {
         date_of_birth: user.date_of_birth,
         department: user.department,
         role: user.role,
-        unique_number: user.unique_number
+        unique_number: user.unique_number,
+        is_active: user.is_active ?? true
       }))
 
       setDistributors(distributorUsers)
@@ -90,7 +91,8 @@ export function AdminDistributorsPage() {
         name: `${newDistributor.firstName} ${newDistributor.lastName}`,
         department: newDistributor.department,
         role: 'distributor',
-        unique_number: nextUniqueNumber
+        unique_number: nextUniqueNumber,
+        is_active: true
       }
 
       const { error } = await supabase

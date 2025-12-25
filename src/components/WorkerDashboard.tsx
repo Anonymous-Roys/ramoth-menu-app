@@ -38,7 +38,7 @@ export function WorkerDashboard({
   // Company location: 6.2025094, -1.7130153
   const COMPANY_LAT = 6.2025094;
   const COMPANY_LNG = -1.7130153;
-  const RADIUS_METERS = 3000; // Distance radius in meters
+  const RADIUS_METERS = 100; // Distance radius in meters
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -51,33 +51,62 @@ export function WorkerDashboard({
   }, []);
 
   const checkLocation = () => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const distance = calculateDistance(
-            position.coords.latitude,
-            position.coords.longitude,
-            COMPANY_LAT,
-            COMPANY_LNG
-          );
-          
-          setIsOnSite(distance <= RADIUS_METERS);
-          
-          if (distance > RADIUS_METERS) {
-            toast.error('You are not at the company location. Meal selection is disabled.');
-          }
-        },
-        () => {
-          // For demo, allow access even if GPS fails
-          setIsOnSite(true);
-          toast.info('GPS verification simulated for demo');
-        }
+  if (!('geolocation' in navigator)) {
+    setIsOnSite(false);
+    toast.error('Geolocation not supported.');
+    return;
+  }
+
+  const watchId = navigator.geolocation.watchPosition(
+    (position) => {
+      const now = Date.now();
+
+      // 1️⃣ Reject cached / stale location
+      if (now - position.timestamp > 30000) {
+        setIsOnSite(false);
+        toast.error('Cached location detected. Please wait for fresh GPS.');
+        return;
+      }
+
+      const { latitude, longitude, accuracy } = position.coords;
+
+      // 2️⃣ Reject poor accuracy
+      if (accuracy > 100) {
+        setIsOnSite(false);
+        toast.error(`Low GPS accuracy (${Math.round(accuracy)}m).`);
+        return;
+      }
+
+      // 3️⃣ Distance check
+      const distance = calculateDistance(
+        latitude,
+        longitude,
+        COMPANY_LAT,
+        COMPANY_LNG
       );
-    } else {
-      setIsOnSite(true);
-      toast.info('GPS verification simulated for demo');
+
+      setIsOnSite(distance <= RADIUS_METERS);
+
+      if (distance > RADIUS_METERS) {
+        toast.error(`You are ${Math.round(distance)}m away from the office.`);
+      }
+
+      // 🛑 Stop watching after first valid fix
+      navigator.geolocation.clearWatch(watchId);
+    },
+    () => {
+      setIsOnSite(false);
+      toast.error('Location permission denied.');
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 15000
     }
-  };
+  );
+};
+
+
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371e3;
@@ -113,7 +142,7 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 9;
+    return hours < 8;
   };
 
   const todayMenu = getTodayMenu();
@@ -165,14 +194,14 @@ export function WorkerDashboard({
   if (showWeeklyMenu) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="bg-white border-b shadow-sm">
+          <div className="px-4 py-4 mx-auto max-w-7xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img src={logo} alt="Ramoth Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
+                <img src={logo} alt="Ramoth Logo" className="object-contain w-8 h-8 sm:w-10 sm:h-10" />
                 <div>
-                  <h2 className="text-lg sm:text-xl font-semibold">Ramoth Menu App</h2>
-                  <p className="text-xs sm:text-sm text-gray-600">{user.name}</p>
+                  <h2 className="text-lg font-semibold sm:text-xl">Ramoth Menu App</h2>
+                  <p className="text-xs text-gray-600 sm:text-sm">{user.name}</p>
                 </div>
               </div>
               <Button onClick={onLogout} variant="outline" size="sm" className="hidden sm:flex">
@@ -186,7 +215,7 @@ export function WorkerDashboard({
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto p-4">
+        <div className="p-4 mx-auto max-w-7xl">
           <WeeklyMenuView 
             weeklyMenus={weeklyMenus} 
             onBack={() => setShowWeeklyMenu(false)} 
@@ -209,16 +238,16 @@ export function WorkerDashboard({
       />
       
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="bg-white border-b shadow-sm">
+        <div className="px-4 py-4 mx-auto max-w-7xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Ramoth Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
+              <img src={logo} alt="Ramoth Logo" className="object-contain w-8 h-8 sm:w-10 sm:h-10" />
               <div>
-                <h2 className="text-lg sm:text-xl font-semibold">Ramoth Menu App</h2>
+                <h2 className="text-lg font-semibold sm:text-xl">Ramoth Menu App</h2>
                 <button 
                   onClick={() => window.location.href = '/profile'}
-                  className="flex items-center gap-2 hover:bg-gray-100 rounded p-1 transition-colors"
+                  className="flex items-center gap-2 p-1 transition-colors rounded hover:bg-gray-100"
                 >
                   <Avatar className="w-6 h-6">
                     <AvatarImage src={user.profilePicture} />
@@ -226,7 +255,7 @@ export function WorkerDashboard({
                       {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <p className="text-xs sm:text-sm text-gray-600">{user.name}</p>
+                  <p className="text-xs text-gray-600 sm:text-sm">{user.name}</p>
                 </button>
               </div>
             </div>
@@ -250,20 +279,20 @@ export function WorkerDashboard({
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <div className="max-w-4xl p-4 mx-auto space-y-6 bg-gray-50">
         {/* Welcome Banner */}
-        <Card className="bg-gradient-to-r from-blue-600 to-blue-700 text-white border-0">
+        <Card className="text-black border-0 shadow-lg bg-gradient-to-r from-gray-100 to-gray-200 shadow-gray-200">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-white mb-1">
+                <h3 className="mb-1 text-2xl font-semibold text-black">
                   {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </h3>
-                <p className="text-blue-100">Hello, {user.name} 👋</p>
+                <p className="text-gray-600">Hello, {user.name} 👋</p>
               </div>
               <div className="text-right">
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-                  <p className="text-sm text-blue-100">Current Time</p>
+                <div className="px-4 py-2 bg-gray-300 rounded-lg backdrop-blur-sm">
+                  <p className="text-sm text-black-100">Current Time</p>
                   <p className="text-xl">
                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                   </p>
@@ -274,16 +303,16 @@ export function WorkerDashboard({
         </Card>
 
         {/* Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className={isOnSite ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Card className={isOnSite ? 'border-blue-200 bg-gray-50' : 'border-red-100 bg-gray-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-xl ${isOnSite ? 'bg-green-100' : 'bg-red-100'}`}>
-                  <MapPin className={`w-5 h-5 ${isOnSite ? 'text-green-600' : 'text-red-600'}`} />
+                <div className={`p-3 rounded-xl ${isOnSite ? 'bg-blue-100' : 'bg-amber-100'}`}>
+                  <MapPin className={`w-5 h-5 ${isOnSite ? 'text-blue-600' : 'text-gray-600'}`} />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Location</p>
-                  <p className={isOnSite ? 'text-green-600' : 'text-red-600'}>
+                  <p className={isOnSite ? 'text-blue-600' : 'text-amber-600'}>
                     {isOnSite ? 'On Site ✓' : 'Off Site'}
                   </p>
                 </div>
@@ -293,7 +322,7 @@ export function WorkerDashboard({
 
 
 
-          <Card className={beforeDeadline ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}>
+          <Card className={beforeDeadline ? 'border-blue-200 bg-gray-50' : 'border-gray-200 bg-gray-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className={`p-3 rounded-xl ${beforeDeadline ? 'bg-blue-100' : 'bg-gray-100'}`}>
@@ -309,15 +338,15 @@ export function WorkerDashboard({
             </CardContent>
           </Card>
 
-          <Card className={alreadySelected ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}>
+          <Card className={alreadySelected ? 'border-blue-200 bg-gray-50' : 'border-gray-200 bg-gray-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-xl ${alreadySelected ? 'bg-green-100' : 'bg-orange-100'}`}>
-                  <Check className={`w-5 h-5 ${alreadySelected ? 'text-green-600' : 'text-orange-600'}`} />
+                <div className={`p-3 rounded-xl ${alreadySelected ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                  <Check className={`w-5 h-5 ${alreadySelected ? 'text-blue-600' : 'text-gray-600'}`} />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Selection Status</p>
-                  <p className={alreadySelected ? 'text-green-600' : 'text-orange-600'}>
+                  <p className={alreadySelected ? 'text-blue-600' : 'text-gray-600'}>
                     {alreadySelected ? 'Complete ✓' : 'Pending'}
                   </p>
                 </div>
@@ -330,7 +359,7 @@ export function WorkerDashboard({
 
         {!beforeDeadline && (
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="w-4 h-4" />
             <AlertDescription>
               ⏰ Selection deadline has passed. Selections close at 8:00 AM daily.
             </AlertDescription>
@@ -338,10 +367,10 @@ export function WorkerDashboard({
         )}
 
         {alreadySelected && todaySelection && (
-          <Alert className="border-green-200 bg-green-50">
-            <Check className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
-              You selected <strong>{todaySelection.mealName}</strong>Thank you!
+          <Alert className="border-blue-200 bg-blue-50">
+            <Check className="w-4 h-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              <div>You selected <strong>{todaySelection.mealName}</strong>.Thank you!</div>
             </AlertDescription>
           </Alert>
         )}
@@ -349,8 +378,8 @@ export function WorkerDashboard({
         {/* Today's Meals */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              🍛 Today's Meals
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+              Today's Meals
             </CardTitle>
             <CardDescription>
               {alreadySelected ? 'Click to update your selection (before 8:00 AM)' : 'Select your preferred meal'}
@@ -359,13 +388,13 @@ export function WorkerDashboard({
           <CardContent>
             {!todayMenu ? (
               <Alert>
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="w-4 h-4" />
                 <AlertDescription>
                   No menu available for today. Please contact administration.
                 </AlertDescription>
               </Alert>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 {todayMenu.meals.map((meal) => {
                   const isSelected = alreadySelected && todaySelection?.mealId === meal.id;
                   return (
@@ -373,7 +402,7 @@ export function WorkerDashboard({
                       key={meal.id} 
                       className={`transition-all ${
                         isSelected
-                          ? 'border-green-500 bg-green-50 shadow-md' 
+                          ? 'border-blue-500 bg-blue-50 shadow-md' 
                           : canSelect
                           ? 'hover:border-blue-400 hover:shadow-md cursor-pointer'
                           : 'opacity-60'
@@ -382,10 +411,10 @@ export function WorkerDashboard({
                     >
                       <CardContent className="pt-6">
                         <div className="space-y-3">
-                          <div className="flex items-start justify-between">
+                          <div className="flex items-start justify-between font-semibold">
                             <h4>{meal.name}</h4>
                             {isSelected && (
-                              <Badge className="bg-green-600">Selected</Badge>
+                              <Badge className="bg-blue-600">Selected</Badge>
                             )}
                           </div>
                           <p className="text-sm text-gray-600">{meal.description}</p>
@@ -404,7 +433,7 @@ export function WorkerDashboard({
                             <Button
                               onClick={handleMealDeselect}
                               variant="outline"
-                              className="w-full border-red-300 text-red-600 hover:bg-red-50"
+                              className="w-full text-red-600 border-red-300 hover:bg-red-50"
                             >
                               Cancel
                             </Button>
@@ -420,17 +449,20 @@ export function WorkerDashboard({
         </Card>
 
         {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Card className="border-orange-200">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
-                <div className="bg-orange-100 p-2 rounded-lg">
+                <div className="p-2 bg-orange-100 rounded-lg">
                   <AlertCircle className="w-5 h-5 text-orange-600" />
                 </div>
                 <div>
                   <h4 className="mb-2">Selection Requirements</h4>
-                  <ul className="text-sm text-gray-700 space-y-1">
+                  <ul className="space-y-1 text-sm text-gray-700">
                     <li>🔒 You must be on-site to select</li>
+                    <li className="text-amber-600">
+                        📌 GPS must be live, accurate, and within 100m of the office.</li>
+
                     <li>🕒 Selection closes at 8:00 AM</li>
                   </ul>
                 </div>
@@ -441,12 +473,12 @@ export function WorkerDashboard({
           <Card className="border-blue-200">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
-                <div className="bg-blue-100 p-2 rounded-lg">
+                <div className="p-2 bg-blue-100 rounded-lg">
                   <User className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
                   <h4 className="mb-2">Need Help?</h4>
-                  <ul className="text-sm text-gray-700 space-y-1">
+                  <ul className="space-y-1 text-sm text-gray-700">
                     <li>📧 Contact HR for issues</li>
                     <li>🍽️ One meal selection per day</li>
                   </ul>

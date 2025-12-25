@@ -98,6 +98,7 @@ export function DailyReport() {
       const selectedWorkers = allWorkers.filter(w => w.hasSelected)
       // Group workers by department
       const groupedByDepartment = selectedWorkers.reduce((groups, worker) => {
+        
         if (!groups[worker.department]) groups[worker.department] = []
         groups[worker.department].push(worker)
         return groups
@@ -167,8 +168,8 @@ export function DailyReport() {
       pdf.setFontSize(8)
       pdf.setTextColor(0, 0, 0)
 
-// Render workers in rows of 3
-for (let i = 0; i < workersInDept.length; i += 3) {
+// Render workers in rows of 2
+for (let i = 0; i < workersInDept.length; i += 2) {
   if (yPos > 270) {
     pdf.addPage()
     yPos = 10
@@ -176,12 +177,12 @@ for (let i = 0; i < workersInDept.length; i += 3) {
 
   const w1 = workersInDept[i]
   const w2 = workersInDept[i + 1]
-  const w3 = workersInDept[i + 2]
+  //const w3 = workersInDept[i + 2]
 
   // Column positions
   const col1X = 25
-  const col2X = 80
-  const col3X = 135
+  const col2X = 110
+  //const col3X = 135
 
   // Row background
   pdf.setFillColor(250, 250, 250)
@@ -190,7 +191,7 @@ for (let i = 0; i < workersInDept.length; i += 3) {
   // Draw vertical lines for column separation
   pdf.setDrawColor(200) // light gray
   pdf.line(col2X - 5, yPos, col2X - 5, yPos + 6)
-  pdf.line(col3X - 5, yPos, col3X - 5, yPos + 6)
+  //pdf.line(col3X - 5, yPos, col3X - 5, yPos + 6)
   
 
   // Worker 1
@@ -206,11 +207,11 @@ for (let i = 0; i < workersInDept.length; i += 3) {
     pdf.text(w2.mealName?.substring(0, 15) || '', col2X + 35, yPos + 2)
   }
 
-  // Worker 3
+  /* // Worker 3
   if (w3) {
     pdf.text(w3.name.substring(0, 18), col3X, yPos + 2)
     pdf.text(w3.mealName?.substring(0, 15) || '', col3X + 35, yPos + 2)
-  }
+  } */
 
   yPos += 5
 }
@@ -239,9 +240,9 @@ for (let i = 0; i < workersInDept.length; i += 3) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          {/* <CardTitle className="flex items-center gap-2">
             📊 Daily Meal Selection Report
-          </CardTitle>
+          </CardTitle> */}
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-4">
