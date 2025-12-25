@@ -35,10 +35,11 @@ export function WorkerDashboard({
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [showWeeklyMenu, setShowWeeklyMenu] = useState(false);
 
-  // Company location: 6.2025094, -1.7130153
-  const COMPANY_LAT = 6.2025094;
-  const COMPANY_LNG = -1.7130153;
-  const RADIUS_METERS = 100; // Distance radius in meters
+  // Company location: 6.2025094, -1.7130153 6.20530, -1.71848 ---6.204614, -1.719546
+
+  const COMPANY_LAT = 6.204614;
+  const COMPANY_LNG = -1.719546;
+  const RADIUS_METERS = 8000; // Distance radius in meters
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -50,7 +51,7 @@ export function WorkerDashboard({
     return () => clearInterval(timer);
   }, []);
 
-  const checkLocation = () => {
+  /* const checkLocation = () => {
   if (!('geolocation' in navigator)) {
     setIsOnSite(false);
     toast.error('Geolocation not supported.');
@@ -104,9 +105,36 @@ export function WorkerDashboard({
       timeout: 15000
     }
   );
-};
-
-
+}; */
+   
+  const checkLocation = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const distance = calculateDistance(
+            position.coords.latitude,
+            position.coords.longitude,
+            COMPANY_LAT,
+            COMPANY_LNG
+          );
+          
+          setIsOnSite(distance <= RADIUS_METERS);
+          
+          if (distance > RADIUS_METERS) {
+            toast.error('You are not at the company location. Meal selection is disabled.');
+          }
+        },
+        () => {
+          // For demo, allow access even if GPS fails
+          setIsOnSite(true);
+          toast.info('GPS verification simulated for demo');
+        }
+      );
+    } else {
+      setIsOnSite(true);
+      toast.info('GPS verification simulated for demo');
+    }
+  };
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371e3;
@@ -461,7 +489,7 @@ export function WorkerDashboard({
                   <ul className="space-y-1 text-sm text-gray-700">
                     <li>🔒 You must be on-site to select</li>
                     <li className="text-amber-600">
-                        📌 GPS must be live, accurate, and within 100m of the office.</li>
+                        📌 GPS must be live, accurate, and within 100m of the office.</li> */}
 
                     <li>🕒 Selection closes at 8:00 AM</li>
                   </ul>
