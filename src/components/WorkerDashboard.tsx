@@ -489,7 +489,7 @@ export function WorkerDashboard({
                   <ul className="space-y-1 text-sm text-gray-700">
                     <li>🔒 You must be on-site to select</li>
                     <li className="text-amber-600">
-                        📌 GPS must be live, accurate, and within 100m of the office.</li> */}
+                        📌 GPS must be live, accurate, and within 100m of the office.</li>
 
                     <li>🕒 Selection closes at 8:00 AM</li>
                   </ul>
