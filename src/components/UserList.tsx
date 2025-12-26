@@ -85,11 +85,21 @@ export function UserList() {
     }
 
     try {
-      const { error } = await supabase
+       // First delete all selections for this user
+      const { error: selectionsError } = await supabase
+        .from('selections')
+        .delete()
+        .eq('user_id', userId)
+
+      if (selectionsError) throw selectionsError
+
+      // Then delete the user
+      const { error: userError } = await supabase
         .from('users')
         .delete()
         .eq('id', userId)
-      if (error) throw error
+
+      if (userError) throw userError
       setUsers(prev => prev.filter(user => user.id !== userId))
       toast.success('User deleted successfully')
     } catch (error) {
