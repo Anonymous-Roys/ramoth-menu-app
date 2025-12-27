@@ -34,19 +34,20 @@ export function WorkerDashboard({
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [showWeeklyMenu, setShowWeeklyMenu] = useState(false);
+  const [dayOffset, setDayOffset] = useState<number>(0); // 0 = today, 1 = tomorrow
 
   // Company location: 6.2025094, -1.7130153 6.20530, -1.71848 ---6.204614, -1.719546
 
-  const COMPANY_LAT = 6.204614;
-  const COMPANY_LNG = -1.719546;
-  const RADIUS_METERS = 8000; // Distance radius in meters
+  //const COMPANY_LAT = 6.204614;
+  //const COMPANY_LNG = -1.719546;
+  //const RADIUS_METERS = 8000; // Distance radius in meters
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
 
-    checkLocation();
+    //checkLocation();
 
     return () => clearInterval(timer);
   }, []);
@@ -107,7 +108,7 @@ export function WorkerDashboard({
   );
 }; */
    
-  const checkLocation = () => {
+  /* const checkLocation = () => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -134,9 +135,9 @@ export function WorkerDashboard({
       setIsOnSite(true);
       toast.info('GPS verification simulated for demo');
     }
-  };
+  }; */
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  /* const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371e3;
     const φ1 = lat1 * Math.PI / 180;
     const φ2 = lat2 * Math.PI / 180;
@@ -149,37 +150,53 @@ export function WorkerDashboard({
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c;
-  };
+  }; */
 
 
 
   const getTodayMenu = (): DailyMenu | null => {
-    const today = new Date().toISOString().split('T')[0];
-    return weeklyMenus.find(menu => menu.date === today) || null;
+    const target = new Date();
+    target.setDate(target.getDate() + dayOffset);
+    const dateStr = target.toISOString().split('T')[0];
+    return weeklyMenus.find(menu => menu.date === dateStr) || null;
   };
 
   const hasSelectedToday = (): boolean => {
-    const today = new Date().toISOString().split('T')[0];
-    return selections.some(s => s.userId === user.id && s.date === today);
+    const target = new Date();
+    target.setDate(target.getDate() + dayOffset);
+    const dateStr = target.toISOString().split('T')[0];
+    return selections.some(s => s.userId === user.id && s.date === dateStr);
   };
 
   const getTodaySelection = (): MealSelection | null => {
-    const today = new Date().toISOString().split('T')[0];
-    return selections.find(s => s.userId === user.id && s.date === today) || null;
+    const target = new Date();
+    target.setDate(target.getDate() + dayOffset);
+    const dateStr = target.toISOString().split('T')[0];
+    return selections.find(s => s.userId === user.id && s.date === dateStr) || null;
   };
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 8;
+    return hours < 23;
   };
 
   const todayMenu = getTodayMenu();
   const alreadySelected = hasSelectedToday();
   const todaySelection = getTodaySelection();
+  const selectedDate = (() => { const d = new Date(); d.setDate(d.getDate() + dayOffset); return d.toISOString().split('T')[0]; })();
   const beforeDeadline = isBeforeDeadline();
-  const canSelect = isOnSite && beforeDeadline;
+  // allow selecting: for today only before deadline; for tomorrow allow anytime while on-site
+  //const canSelect = /* isOnSite &&  */(dayOffset === 0 ? beforeDeadline : true);
 
-  const handleMealSelect = (mealId: string, mealName: string) => {
+  const isBefore8PM = currentTime.getHours() < 20;
+
+  const canSelect =
+    dayOffset === 0
+      ? beforeDeadline          // today → before 8 AM
+      : isBefore8PM;            // tomorrow → before 8 PM
+
+
+  /* const handleMealSelect = (mealId: string, mealName: string) => {
     if (!isBeforeDeadline()) {
       toast.error('Selection deadline has passed (8:00 AM)');
       return;
@@ -191,23 +208,48 @@ export function WorkerDashboard({
         department: user.department,
         mealId,
         mealName,
-        date: new Date().toISOString().split('T')[0],
+        date: selectedDate,
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
       };
 
       onMealSelection(selection);
       setSelectedMeal(mealId);
       toast.success(`${mealName} selected successfully!`);
+  }; */
+  const handleMealSelect = (mealId: string, mealName: string) => {
+  // ⛔ Only block deadline for TODAY
+  if (dayOffset === 0 && !isBeforeDeadline()) {
+    toast.error('Selection deadline has passed (8:00 AM)');
+    return;
+  }
+
+  const selection: MealSelection = {
+    userId: user.id,
+    userName: user.name,
+    department: user.department,
+    mealId,
+    mealName,
+    date: selectedDate,
+    time: new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   };
 
-  const handleMealDeselect = (e: React.MouseEvent) => {
+  onMealSelection(selection);
+  setSelectedMeal(mealId);
+  toast.success(`${mealName} selected successfully!`);
+};
+
+
+  /* const handleMealDeselect = (e: React.MouseEvent<HTMLButtonElement>) => {
   e.stopPropagation(); // ✅ prevents double firing due to event bubbling
 
   if (!isBeforeDeadline()) {
     toast.error('Selection deadline has passed (8:00 AM)');
     return;
   }
-    const today = new Date().toISOString().split('T')[0];
+    const today = selectedDate;
     if (onMealDeselection) {
       onMealDeselection(user.id, today);
       setSelectedMeal(null);
@@ -215,6 +257,21 @@ export function WorkerDashboard({
     } else {
       toast.error('Meal deselection function not available.');
     }
+}; */
+  const handleMealDeselect = (e: React.MouseEvent<HTMLButtonElement>) => {
+  e.stopPropagation();
+
+  // ⛔ Deadline applies ONLY to today
+  if (dayOffset === 0 && !isBeforeDeadline()) {
+    toast.error('Selection deadline has passed (8:00 AM)');
+    return;
+  }
+
+  if (onMealDeselection) {
+    onMealDeselection(user.id, selectedDate);
+    setSelectedMeal(null);
+    toast.success('Meal selection removed successfully!');
+  }
 };
 
 
@@ -332,7 +389,7 @@ export function WorkerDashboard({
 
         {/* Status Cards */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Card className={isOnSite ? 'border-blue-200 bg-gray-50' : 'border-red-100 bg-gray-50'}>
+          {/* <Card className={isOnSite ? 'border-blue-200 bg-gray-50' : 'border-red-100 bg-gray-50'}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className={`p-3 rounded-xl ${isOnSite ? 'bg-blue-100' : 'bg-amber-100'}`}>
@@ -346,7 +403,7 @@ export function WorkerDashboard({
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
 
 
@@ -406,12 +463,38 @@ export function WorkerDashboard({
         {/* Today's Meals */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl font-semibold">
-              Today's Meals
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+                {dayOffset === 0 ? "Today's Meals" : "Tomorrow's Meals"}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={dayOffset === 0 ? undefined : 'ghost'}
+                  size="sm"
+                  onClick={() => setDayOffset(0)}
+                >
+                  Today
+                </Button>
+                <Button
+                  variant={dayOffset === 1 ? undefined : 'ghost'}
+                  size="sm"
+                  onClick={() => setDayOffset(1)}
+                >
+                  Tomorrow
+                </Button>
+              </div>
+            </div>
+            {/* <CardDescription>
+              {alreadySelected ? 'Click to update your selection (before 8:00 AM)' : `Select your preferred meal for ${selectedDate}`}
+            </CardDescription> */}
             <CardDescription>
-              {alreadySelected ? 'Click to update your selection (before 8:00 AM)' : 'Select your preferred meal'}
+              {dayOffset === 0
+                ? alreadySelected
+                  ? 'Click to update your selection (before 8:00 AM)'
+                  : `Select your meal for today`
+                : 'Select your meal for tomorrow (before 8:00 PM today)'}
             </CardDescription>
+
           </CardHeader>
           <CardContent>
             {!todayMenu ? (
@@ -448,7 +531,7 @@ export function WorkerDashboard({
                           <p className="text-sm text-gray-600">{meal.description}</p>
                           {canSelect && !isSelected && (
                             <Button
-                              onClick={(e) => {
+                              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                 e.stopPropagation();
                                 handleMealSelect(meal.id, meal.name);
                               }}
@@ -459,7 +542,7 @@ export function WorkerDashboard({
                           )}
                           {canSelect && isSelected && (
                             <Button
-                              onClick={handleMealDeselect}
+                              onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleMealDeselect(e)}
                               variant="outline"
                               className="w-full text-red-600 border-red-300 hover:bg-red-50"
                             >
@@ -486,13 +569,19 @@ export function WorkerDashboard({
                 </div>
                 <div>
                   <h4 className="mb-2">Selection Requirements</h4>
-                  <ul className="space-y-1 text-sm text-gray-700">
+                  {/* <ul className="space-y-1 text-sm text-gray-700">
                     <li>🔒 You must be on-site to select</li>
                     <li className="text-amber-600">
                         📌 GPS must be live, accurate, and within 100m of the office.</li>
 
                     <li>🕒 Selection closes at 8:00 AM</li>
+                  </ul> */}
+                  <ul className="space-y-1 text-sm text-gray-700">
+                    <li>🍽️ One meal selection per day</li>
+                    <li>🕗 Today’s meal can be selected or changed before 8:00 AM</li>
+                    <li>🌙 Tomorrow’s meal must be selected before 8:00 PM today</li>
                   </ul>
+
                 </div>
               </div>
             </CardContent>
