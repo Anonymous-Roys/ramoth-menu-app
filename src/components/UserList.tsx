@@ -14,7 +14,7 @@ export function UserList() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
-  const [statusFilter, setStatusFilter] = useState<string>('all') // 'all', 'active', 'inactive'
+  const [statusFilter, setStatusFilter] = useState<string>('active') // 'all', 'active', 'inactive'
   const [isLoading, setIsLoading] = useState(true)
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
@@ -175,12 +175,13 @@ export function UserList() {
           </div>
           
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 bg-gray-100 p-3 rounded-md">
               <div className="flex items-center gap-1">
                 <Filter className="w-4 h-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-700">Role:</span>
               </div>
-              {['all', 'worker', 'admin', 'distributor'].map((role) => (
+              <div className='flex flex-wrap gap-3 items-center'>
+                {['all', 'worker', 'admin', 'distributor'].map((role) => (
                 <Button
                   key={role}
                   variant={roleFilter === role ? 'default' : 'outline'}
@@ -191,14 +192,16 @@ export function UserList() {
                   {role === 'all' ? 'All Roles' : role === 'worker' ? 'Workers' : role === 'admin' ? 'Admins' : 'Distributors'}
                 </Button>
               ))}
+              </div>
             </div>
             
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 bg-gray-100 p-3 rounded-md">
               <div className="flex items-center gap-1">
                 <Filter className="w-4 h-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-700">Status:</span>
               </div>
-              {['all', 'active', 'inactive'].map((status) => (
+              <div className='flex flex-wrap gap-1 items-center'>
+                {['all', 'active', 'inactive'].map((status) => (
                 <Button
                   key={status}
                   variant={statusFilter === status ? 'default' : 'outline'}
@@ -214,6 +217,7 @@ export function UserList() {
                     <><UserX className="w-3 h-3 mr-1" /> Inactive</>}
                 </Button>
               ))}
+              </div>
             </div>
           </div>
         </div>
@@ -321,7 +325,7 @@ export function UserList() {
                         )}
                       </Button>
                     </div>
-                    <Button
+                    {/* <Button
                       size="sm"
                       variant="outline"
                       onClick={() => deleteUser(user.id, user.name)}
@@ -329,7 +333,7 @@ export function UserList() {
                     >
                       <Trash2 className="w-3 h-3" />
                       Delete
-                    </Button>
+                    </Button> */}
                   </div>
                 </>
               )}

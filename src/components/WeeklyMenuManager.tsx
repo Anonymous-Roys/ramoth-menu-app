@@ -133,9 +133,9 @@ export function WeeklyMenuManager({ weeklyMenus, onUpdateMenus }: WeeklyMenuMana
 
   const handleLoadTemplate = () => {
     const template: MealOption[] = [
-      { id: '1', name: 'Jollof Rice', description: 'Served with chicken and salad' },
-      { id: '2', name: 'Fried Rice', description: 'Served with beef and vegetables' },
-      { id: '3', name: 'Banku & Okro', description: 'Served with fish' }
+      { id: '1', name: 'Rice', description: 'Served with Stew' },
+      { id: '2', name: 'Banku', description: 'Served with soup' },
+      /* { id: '3', name: 'Banku & Okro', description: 'Served with fish' } */
     ];
 
     setWeeklyInput(prev => {
