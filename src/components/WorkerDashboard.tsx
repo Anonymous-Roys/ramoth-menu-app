@@ -11,6 +11,8 @@ import { NotificationSystem } from './NotificationSystem';
 import type { User as UserType, DailyMenu, MealSelection } from '../App';
 import logo from '../logo.png';
 
+import { enableNotifications } from '../firebase'
+
 
 
 interface WorkerDashboardProps {
@@ -35,12 +37,37 @@ export function WorkerDashboard({
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [showWeeklyMenu, setShowWeeklyMenu] = useState(false);
   const [dayOffset, setDayOffset] = useState<number>(0); // 0 = today, 1 = tomorrow
+  const [notificationPermission, setNotificationPermission] =
+    useState<NotificationPermission>('default')
+
 
   // Company location: 6.2025094, -1.7130153 6.20530, -1.71848 ---6.204614, -1.719546
 
   //const COMPANY_LAT = 6.204614;
   //const COMPANY_LNG = -1.719546;
   //const RADIUS_METERS = 8000; // Distance radius in meters
+
+  useEffect(() => {
+  enableNotifications()
+}, [])
+
+  useEffect(() => {
+  if ('Notification' in window) {
+    setNotificationPermission(Notification.permission)
+  }
+}, [])
+
+/* useEffect(() => {
+  if (Notification.permission === 'granted') {
+    new Notification('🔥 Test Notification', {
+      body: 'If you see this, notifications work'
+    })
+  }
+}, []) */
+
+//✅ FCM TOKEN: fB2alZzsx0vI9EWf1hYRHZ:APA91bGuvyCK81qCOVkJP0C1dObZh22YfMJBqeFojLW1hfCBLMl5pAce515jr98qZa6v1tsoNyub78hKLGcQAfT0hN4fx8c1d4JsW54KL2QXG1ycK06dOCw
+
+
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -51,6 +78,8 @@ export function WorkerDashboard({
 
     return () => clearInterval(timer);
   }, []);
+
+  
 
   /* const checkLocation = () => {
   if (!('geolocation' in navigator)) {
@@ -223,6 +252,9 @@ export function WorkerDashboard({
     return;
   }
 
+  
+
+
   const selection: MealSelection = {
     userId: user.id,
     userName: user.name,
@@ -274,6 +306,15 @@ export function WorkerDashboard({
   }
 };
 
+  const handleEnableNotifications = async () => {
+  try {
+    await enableNotifications()
+    setNotificationPermission(Notification.permission)
+  } catch (err) {
+    console.error(err)
+  }
+}
+
 
 
   if (showWeeklyMenu) {
@@ -316,11 +357,11 @@ export function WorkerDashboard({
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
       {/* Notification System */}
-      <NotificationSystem 
+      {/* <NotificationSystem 
         hasSelectedToday={alreadySelected}
         currentTime={currentTime}
         userId={user.id}
-      />
+      /> */}
       
       {/* Header */}
       <div className="bg-white border-b shadow-sm">
@@ -386,6 +427,26 @@ export function WorkerDashboard({
             </div>
           </CardContent>
         </Card>
+        
+
+      {notificationPermission !== 'granted' && (
+  <Alert className="border-blue-200 bg-blue-50">
+    <AlertCircle className="w-4 h-4 text-blue-600" />
+    <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-blue-800">
+        🔔 Enable notifications to receive meal reminders before deadlines.
+      </span>
+      <Button
+        onClick={handleEnableNotifications}
+        className="bg-blue-600 hover:bg-blue-700"
+      >
+        Enable Notifications
+      </Button>
+    </AlertDescription>
+  </Alert>
+)}
+
+
 
         {/* Status Cards */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
