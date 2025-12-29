@@ -32,7 +32,7 @@ export function WorkerDashboard({
   onMealSelection,
   onMealDeselection // ✅ include this prop
 }: WorkerDashboardProps) {
-  const [isOnSite, setIsOnSite] = useState(false);
+  //const [isOnSite, setIsOnSite] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [showWeeklyMenu, setShowWeeklyMenu] = useState(false);
@@ -217,7 +217,7 @@ export function WorkerDashboard({
   // allow selecting: for today only before deadline; for tomorrow allow anytime while on-site
   //const canSelect = /* isOnSite &&  */(dayOffset === 0 ? beforeDeadline : true);
 
-  const isBefore8PM = currentTime.getHours() < 20;
+  const isBefore8PM = currentTime.getHours() < 20 && currentTime.getHours() >= 8;
 
   const canSelect =
     dayOffset === 0
