@@ -84,58 +84,61 @@ export function MenuPage() {
   }
 
   const handleMealSelection = async (selection: MealSelection) => {
-    try {
-      const today = new Date().toISOString().split('T')[0]
-      
-      // Check if user already has a selection for today
-      const { data: existingSelection } = await supabase
-        .from('selections')
-        .select('id')
-        .eq('user_id', selection.userId)
-        .eq('date', today)
-        .single()
+  try {
+    // 🔑 use the date coming from the dashboard
+    const { data: existingSelection, error: fetchError } = await supabase
+      .from('selections')
+      .select('id')
+      .eq('user_id', selection.userId)
+      .eq('date', selection.date)
+      .maybeSingle();
 
-      if (existingSelection) {
-        // Update existing selection
-        const { error } = await supabase
-          .from('selections')
-          .update({
-            meal_id: selection.mealId,
-            meal_name: selection.mealName,
-            created_at: new Date().toISOString()
-          })
-          .eq('id', existingSelection.id)
-
-        if (error) throw error
-        
-        // Update local state
-        setSelections(prev => 
-          prev.map(s => 
-            s.userId === selection.userId && s.date === today
-              ? { ...s, mealId: selection.mealId, mealName: selection.mealName }
-              : s
-          )
-        )
-      } else {
-        // Insert new selection
-        const { error } = await supabase
-          .from('selections')
-          .insert({
-            user_id: selection.userId,
-            meal_id: selection.mealId,
-            meal_name: selection.mealName,
-            date: selection.date,
-            location: null
-          })
-
-        if (error) throw error
-        
-        setSelections(prev => [...prev, selection])
-      }
-    } catch (error) {
-      console.error('Failed to save selection:', error)
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      throw fetchError;
     }
+
+    if (existingSelection) {
+      // ✅ Update only THAT DATE
+      const { error } = await supabase
+        .from('selections')
+        .update({
+          meal_id: selection.mealId,
+          meal_name: selection.mealName,
+          created_at: new Date().toISOString()
+        })
+        .eq('id', existingSelection.id);
+
+      if (error) throw error;
+
+      setSelections(prev =>
+        prev.map(s =>
+          s.userId === selection.userId && s.date === selection.date
+            ? { ...s, mealId: selection.mealId, mealName: selection.mealName }
+            : s
+        )
+      );
+    } else {
+      // ✅ Insert new selection for THAT DATE
+      const { error } = await supabase
+        .from('selections')
+        .insert({
+          user_id: selection.userId,
+          meal_id: selection.mealId,
+          meal_name: selection.mealName,
+          date: selection.date,
+          location: null
+        });
+
+      if (error) throw error;
+
+      setSelections(prev => [...prev, selection]);
+    }
+  } catch (error) {
+    console.error('Failed to save selection:', error);
+    toast.error('Failed to save meal selection');
   }
+};
+
 
   const handleMealDeselection = async (userId: string, date: string) => {
   try {
