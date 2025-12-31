@@ -72,7 +72,7 @@ export function WorkerDashboard({
 
   const isBeforeDeadline = () => {
     const hours = currentTime.getHours();
-    return hours < 19;
+    return hours < 18.5;
   };
 
   const alreadySelected = hasSelectedTomorrow();
@@ -83,7 +83,7 @@ export function WorkerDashboard({
 
   const handleMealSelect = (mealId: string, mealName: string) => {
     if (!isBeforeDeadline()) {
-      toast.error('Selection deadline has passed (7:00 PM)');
+      toast.error('Selection deadline has passed (6:30 PM)');
       return;
     }
 
@@ -106,7 +106,7 @@ export function WorkerDashboard({
   e.stopPropagation(); // ✅ prevents double firing due to event bubbling
 
   if (!isBeforeDeadline()) {
-    toast.error('Selection deadline has passed (7:00 PM)');
+    toast.error('Selection deadline has passed (6:30 PM)');
     return;
   }
     const tomorrow = getTomorrowDate();
@@ -243,7 +243,7 @@ export function WorkerDashboard({
                 <div>
                   <p className="text-sm text-gray-600">Deadline Status</p>
                   <p className={beforeDeadline ? 'text-blue-600' : 'text-gray-600'}>
-                    {beforeDeadline ? 'Before 7:00 PM ✓' : 'After 7:00 PM'}
+                    {beforeDeadline ? 'Before 6:30 PM ✓' : 'After 6:30 PM'}
                   </p>
                 </div>
               </div>
@@ -273,7 +273,7 @@ export function WorkerDashboard({
           <Alert variant="destructive">
             <AlertCircle className="w-4 h-4" />
             <AlertDescription>
-              ⏰ Selection deadline has passed. Selections close at 7:00 PM daily.
+              ⏰ Selection deadline has passed. Selections close at 6:30 PM daily.
             </AlertDescription>
           </Alert>
         )}
@@ -294,7 +294,7 @@ export function WorkerDashboard({
             Tomorrow&apos;s Meals
             </CardTitle>
             <CardDescription>
-              {alreadySelected ? 'Click to update your selection (before 7:00 PM)' : 'Select your preferred meal'}
+              {alreadySelected ? 'Click to update your selection (before 6:30 PM)' : 'Select your preferred meal'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -371,7 +371,7 @@ export function WorkerDashboard({
                 <div>
                   <h4 className="mb-2">Selection Requirements</h4>
                   <ul className="space-y-1 text-sm text-gray-700">
-                    <li>🕒 Selection closes at 7:00 PM</li>
+                    <li>🕒 Selection closes at 6:30 PM</li>
                   </ul>
                 </div>
               </div>
